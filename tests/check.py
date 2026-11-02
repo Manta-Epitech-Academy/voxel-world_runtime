@@ -102,6 +102,15 @@ def main():
         pg.evaluate("WorldGenerator.allerA(2)")
         if pg.evaluate("WorldGenerator.etape()") != 2:
             failures.append("WorldGenerator.allerA does not change the step")
+        # `?plateforme=1`: the same hiding with no host, step list kept.
+        pg.goto(url + "?plateforme=1")
+        pg.wait_for_selector("#generer")
+        pg.wait_for_timeout(500)
+        shown = pg.evaluate("()=>[...document.querySelectorAll('#consignes > *')]"
+                            ".filter(e=>getComputedStyle(e).display!=='none').map(e=>e.id||e.className)")
+        print("visible with ?plateforme=1:", shown, "| step list:", pg.is_visible("#etapes"))
+        if any(v in ("indice", "callout outil") for v in shown) or not pg.is_visible("#etapes"):
+            failures.append(f"?plateforme=1 does not hide the text or hides the step list: {shown}")
         if len(tokens) < 7:
             failures.append(f"wg:jeton fired {len(tokens)} times, expected 7")
         browser.close()

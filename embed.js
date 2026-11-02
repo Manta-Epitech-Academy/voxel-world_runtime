@@ -109,28 +109,50 @@
   /* ---------- platform mode ---------- */
 
   var CSS =
-    "body.wg-plateforme #etapes, body.wg-plateforme #suivant { display: none !important; }" +
+    "body.wg-plateforme:not(.wg-navigation) #etapes," +
+    " body.wg-plateforme:not(.wg-navigation) #suivant { display: none !important; }" +
     "body.wg-plateforme #consignes > :not(.entete-etape):not(.objectif):not(#defis):not(#wg-jeton)" +
     " { display: none !important; }" +
     "#wg-jeton { margin-top: 12px; }" +
     "#wg-jeton .wg-code { display: inline-block; margin: 6px 0; padding: 4px 8px; font-size: 1.15em;" +
     " user-select: all; }";
 
-  function enable() {
-    var style = document.createElement("style");
-    style.id = "wg-plateforme-style";
-    style.textContent = CSS;
-    document.head.appendChild(style);
+  function enable(options) {
+    if (!document.getElementById("wg-plateforme-style")) {
+      var style = document.createElement("style");
+      style.id = "wg-plateforme-style";
+      style.textContent = CSS;
+      document.head.appendChild(style);
+    }
     document.body.classList.add("wg-plateforme");
+    // With no host to follow (a runtime served from another origin, which the
+    // platform cannot talk to), the participant changes step themselves, so
+    // the step list stays.
+    document.body.classList.toggle("wg-navigation", !!(options && options.navigation));
   }
+
+  function whenReady(fn) {
+    if (document.body) fn();
+    else document.addEventListener("DOMContentLoaded", fn);
+  }
+
+  // `?plateforme=1` in the address: platform mode without a host. Used when
+  // the platform frames this page from another origin, where no adapter can
+  // be injected (docs/RUNTIME_PROTOCOL.md, `external: true`). Hides the app's
+  // copy of the workshop text, keeps the step list. No secret, so no token:
+  // steps are validated another way (checkpoint codes).
+  try {
+    if (new URLSearchParams(location.search).get("plateforme") === "1") {
+      whenReady(function () { enable({ navigation: true }); });
+    }
+  } catch (e) { /* no URLSearchParams: stay standalone */ }
 
   window.VoxelWorld = {
     /** Called by the platform adapter with the per-instance secret. */
     setSecret: function (s) { secret = s ? String(s) : null; tokens = {}; },
     /** Hide the app's own copy of the workshop text. */
-    enable: function () {
-      if (document.body) enable();
-      else document.addEventListener("DOMContentLoaded", enable);
+    enable: function (options) {
+      whenReady(function () { enable(options); });
     },
     /** For tests: the token a step would show. */
     token: computeToken,
