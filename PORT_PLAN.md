@@ -10,6 +10,30 @@ seven steps validate themselves with no instructor code. What is left is mostly 
 deploying the runtime image, and a few decisions only Kevin can take. Honest estimate: **about
 two days of work**, ready for 14/11 if the decisions below are taken by the review on 9/11.
 
+## Interim deployment on ctf-0110 (2026-11-02)
+
+Kevin asked for World Generator on `https://ctf-0110.epiboost.fr`, which was empty. The image there
+has no voxel-world adapter and the cluster serves no voxel-world runtime, so this is an interim
+shape, not the target one:
+
+- **Content:** subject branch `deploy/ctf-0110`, imported with `tools/sync_subject.py`. The
+  instance's `workshop_source` points to that branch, so the admin sync page re-imports it.
+- **Runtime:** served by **GitHub Pages from this repo's `wrp-port` branch**, framed as an
+  `external` runtime with `?plateforme=1`. That hides the app's copy of the text and keeps its
+  step list. Warning: **every push to `wrp-port` changes what ctf-0110 serves**, straight away.
+  The pinned `version` is ignored for an external runtime.
+- **Validation:** instructor codes (`checkpoint`), because a cross-origin frame cannot receive the
+  token secret. The codes are in the admin answer sheet, and in Kevin's local `~/.secrets`.
+- **Not done: participant access.** Like the other instances, ctf-0110 has self-registration
+  closed, and participants arrive through Jump. It has no `workshop_jump_instance` and no Jump
+  keys yet, so only the admin can open it.
+- **Lost compared to the target:** automatic validation, the runtime following the step being
+  read, and work kept server-side. The work stays in the browser only, because the frame is
+  cross-origin.
+
+Moving to the target shape means the "What is left" items 2 and 3 below. Then switch the subject
+back to `ctfd-workshop-plugin` and re-sync.
+
 ## What is done
 
 Three repositories, one new branch each. Nothing is merged, deployed or opened as a PR.
