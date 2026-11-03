@@ -41,6 +41,63 @@ def serve():
     return httpd
 
 
+def flight(browser):
+    """Fly mode: Z/S (codes KeyW/KeyS) follow the crosshair, Q/D stay level.
+
+    The page does not expose its camera, and a test hook has no place in what
+    students get. So this serves a throwaway copy that exposes the world object
+    (`window.__monde`), places the camera, holds real keys, and measures.
+    """
+    import math, shutil, tempfile
+    tmp = Path(tempfile.mkdtemp())
+    page = (ROOT / "index.html").read_text(encoding="utf-8")
+    hook = 'co("recentrer").addEventListener("click",()=>Hy.recentrer());'
+    assert page.count(hook) == 1, "flight test: the hook anchor moved"
+    (tmp / "index.html").write_text(page.replace(hook, "window.__monde=Hy;" + hook), encoding="utf-8")
+    shutil.copy(ROOT / "embed.js", tmp / "embed.js")
+    httpd = socketserver.TCPServer(("127.0.0.1", 0), functools.partial(Quiet, directory=str(tmp)))
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    pg = browser.new_page(viewport={"width": 1280, "height": 800})
+    pg.goto(f"http://127.0.0.1:{httpd.server_address[1]}/index.html")
+    pg.wait_for_selector("#generer")
+    pg.wait_for_timeout(500)
+    box = pg.locator("#monde canvas").last.bounding_box()
+    pg.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)   # pointer lock
+    pg.wait_for_timeout(300)
+
+    def move(key, pitch):
+        pg.evaluate(f"__monde.vol.placer(64, 40, 64, 0, {pitch})")
+        pg.wait_for_timeout(100)
+        before = pg.evaluate("(({x,y,z})=>[x,y,z])(__monde.vol.camera.position)")
+        pg.keyboard.down(key); pg.wait_for_timeout(400); pg.keyboard.up(key)
+        pg.wait_for_timeout(100)
+        after = pg.evaluate("(({x,y,z})=>[x,y,z])(__monde.vol.camera.position)")
+        return [round(a - b, 2) for a, b in zip(after, before)]
+
+    problems = []
+    down = move("KeyW", -math.pi / 4)   # looking 45° down, forward
+    up = move("KeyW", math.pi / 4)      # looking 45° up, forward
+    level = move("KeyW", 0)
+    back = move("KeyS", -math.pi / 4)   # looking down, backward: goes up
+    side = move("KeyD", -math.pi / 4)   # strafe while looking down: stays level
+    print(f"flight (dx, dy, dz): forward looking down {down}, up {up}, level {level}, "
+          f"back looking down {back}, strafe {side}")
+    if not (down[1] < -0.5 and down[2] < -0.5 and abs(abs(down[1]) - abs(down[2])) < 0.35 * abs(down[2])):
+        problems.append(f"forward while looking 45° down should go down as much as forward: {down}")
+    if not up[1] > 0.5:
+        problems.append(f"forward while looking up should climb: {up}")
+    if abs(level[1]) > 0.01 or level[2] > -0.5:
+        problems.append(f"forward while looking level should stay level: {level}")
+    if not back[1] > 0.5:
+        problems.append(f"back while looking down should climb: {back}")
+    if abs(side[1]) > 0.01 or side[0] < 0.5:
+        problems.append(f"strafing should stay level: {side}")
+    pg.close()
+    httpd.shutdown()
+    shutil.rmtree(tmp, ignore_errors=True)
+    return problems
+
+
 def main():
     sols = solutions(sys.argv[1])
     with zipfile.ZipFile(sys.argv[1]) as z:
@@ -126,6 +183,7 @@ def main():
             failures.append(f"?plateforme=1 does not hide the text or hides the step list: {shown}")
         if len(tokens) < 7:
             failures.append(f"wg:jeton fired {len(tokens)} times, expected 7")
+        failures.extend(flight(browser))
         browser.close()
     httpd.shutdown()
     for f in failures:

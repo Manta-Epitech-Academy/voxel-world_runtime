@@ -24,6 +24,10 @@ What the patches do:
    current one. The platform adapter uses them to follow the step the
    participant is reading.
 5. Load embed.js, the readable part of this runtime (token, platform mode).
+6. In fly mode, forward and back (Z/S on AZERTY, W/S on QWERTY, arrows) follow
+   the crosshair: looking down and going forward goes down. The original moved
+   only horizontally. Strafing stays level, Space and Shift stay vertical, and
+   a diagonal is no faster than a straight move. Walking mode is unchanged.
 
 Nothing else in the app changes. Opened on its own, the page behaves like the
 original minus the solutions.
@@ -89,6 +93,12 @@ PATCHES = [
      "Js.dernierResultat&&sve()}function Wo(",
      "Js.dernierResultat&&sve()}window.WorldGenerator={allerA:o=>{o>=0&&o<TA.length&&_le(o)},"
      "etape:()=>Js.etape,nombreEtapes:()=>TA.length};function Wo("),
+    ("fly along the crosshair",
+     "g=R9e*(s?N9e:1)*e;h.x+=l*g,h.z+=c*g,h.y+=u*g}else{let u=this.corps",
+     "g=R9e*(s?N9e:1)*e;let wgC=Math.cos(this.tangage),wgX=-r*wgC*i+a*n,"
+     "wgY=Math.sin(this.tangage)*i,wgZ=-a*wgC*i-r*n,wgM=Math.hypot(wgX,wgY,wgZ);"
+     "wgM>1&&(wgX/=wgM,wgY/=wgM,wgZ/=wgM);h.x+=wgX*g,h.z+=wgZ*g,h.y+=(wgY+u)*g}"
+     "else{let u=this.corps"),
     ("embed.js",
      "</style>\n</head>\n<body>",
      '</style>\n<script src="embed.js"></script>\n</head>\n<body>'),
