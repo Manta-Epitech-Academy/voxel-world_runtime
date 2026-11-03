@@ -28,6 +28,7 @@
   var secret = null;
   var tokens = {};          // step number -> token, computed once
   var lastGreen = null;     // step number of the latest fully green check
+  var sansDefi = false;     // the platform's current step has no check in the app
 
   function hex(buffer) {
     return Array.prototype.map.call(new Uint8Array(buffer), function (b) {
@@ -92,6 +93,9 @@
   window.addEventListener("wg:verifie", function (ev) {
     var d = ev.detail || {};
     var step = d.etape + 1;
+    // The app is still on another step's checks: a code for that step here
+    // would be offered against the wrong one.
+    if (sansDefi) { hide(); return; }
     if (!d.reussi || !secret) { if (!d.reussi) hide(); return; }
     lastGreen = step;
     computeToken(step).then(function (token) {
@@ -112,7 +116,10 @@
     "body.wg-plateforme:not(.wg-navigation) #etapes," +
     " body.wg-plateforme:not(.wg-navigation) #suivant { display: none !important; }" +
     "body.wg-plateforme #consignes > :not(.entete-etape):not(.objectif):not(#defis):not(#wg-jeton)" +
+    ":not(#wg-sans-defi)" +
     " { display: none !important; }" +
+    "body.wg-sans-defi #consignes > :not(#wg-sans-defi) { display: none !important; }" +
+    "#wg-sans-defi { margin: 4px 0; }" +
     "#wg-jeton { margin-top: 12px; }" +
     "#wg-jeton .wg-code { display: inline-block; margin: 6px 0; padding: 4px 8px; font-size: 1.15em;" +
     " user-select: all; }";
@@ -147,12 +154,37 @@
     }
   } catch (e) { /* no URLSearchParams: stay standalone */ }
 
+  function setSansDefi(on) {
+    sansDefi = on;
+    document.body.classList.toggle("wg-sans-defi", on);
+    var note = document.getElementById("wg-sans-defi");
+    if (on) {
+      if (!note) {
+        note = document.createElement("div");
+        note.id = "wg-sans-defi";
+        note.className = "callout";
+        note.textContent = "Pas de vérification automatique pour cette étape : vérifie ton monde avec la liste du sujet, à côté.";
+      }
+      var panel = document.getElementById("consignes");
+      if (panel && note.parentNode !== panel) panel.prepend(note);
+      hide();
+    } else if (note) {
+      note.remove();
+    }
+  }
+
   window.VoxelWorld = {
     /** Called by the platform adapter with the per-instance secret. */
     setSecret: function (s) { secret = s ? String(s) : null; tokens = {}; },
     /** Hide the app's own copy of the workshop text. */
     enable: function (options) {
       whenReady(function () { enable(options); });
+    },
+    /** The platform's step has no check in the app (or has one again).
+     *  While set, the panel shows one neutral note instead of another step's
+     *  check list, and no token is offered. */
+    etapeSansDefi: function (on) {
+      whenReady(function () { setSansDefi(!!on); });
     },
     /** For tests: the token a step would show. */
     token: computeToken,

@@ -98,6 +98,19 @@ def main():
         print("visible in platform mode:", visible)
         if any(v in ("indice", "callout outil") for v in visible) or pg.is_visible("#etapes"):
             failures.append(f"platform mode still shows the app's own text: {visible}")
+        # A platform step with no check in the app: one neutral note, nothing else.
+        pg.evaluate("VoxelWorld.etapeSansDefi(true)")
+        pg.wait_for_timeout(200)
+        note = pg.is_visible("#wg-sans-defi")
+        others = pg.evaluate("()=>[...document.querySelectorAll('#consignes > *')]"
+                             ".filter(e=>e.id!=='wg-sans-defi'&&getComputedStyle(e).display!=='none').length")
+        print("no-check step: note", note, "| other visible blocks", others)
+        if not note or others:
+            failures.append("etapeSansDefi(true) does not show the note alone")
+        pg.evaluate("VoxelWorld.etapeSansDefi(false)")
+        pg.wait_for_timeout(200)
+        if pg.query_selector("#wg-sans-defi"):
+            failures.append("etapeSansDefi(false) leaves the note")
         # Step API used by the adapter.
         pg.evaluate("WorldGenerator.allerA(2)")
         if pg.evaluate("WorldGenerator.etape()") != 2:
