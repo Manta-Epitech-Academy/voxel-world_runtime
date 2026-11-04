@@ -2,7 +2,7 @@
 """Export the world a Lua program generates as a glTF binary scene (.glb).
 
     python3 scripts/export_scene.py programme.lua -o scenes/etape5.glb [--seed 1]
-           [--cut x,64] [--poster img/etape5.png --camera -30,72,-30 --target 64,12,64]
+           [--cut x[,above|below][,stride]] [--poster img/etape5.png --camera -30,72,-30 --target 64,12,64]
 
 The workshop subject shows each step's expected result as a 3D scene the
 participant can turn around (convention §3.8b). This produces that scene from
@@ -24,11 +24,15 @@ The file is standard glTF 2.0, binary, one file, readable by any glTF viewer:
 - positions, texture coordinates and colours are bytes (KHR_mesh_quantization),
   which the three.js loader the platform uses understands: 12 bytes a vertex.
 
-`--cut x,64` adds a second node named `cut`: the same world with everything at
-x ≥ 64 removed (`--cut x,64,above` removes x < 64 instead), meshed again so the cut surface shows the layers and the
-caves. The platform's viewer swaps to that node when the participant presses
-« Cut away » (convention §3.8b); any other glTF viewer shows both nodes, which
-is what the node name is for.
+`--cut x` makes the scene cuttable along x with a slider (convention §3.8b).
+The viewer clips the world at the slider's position; a clipped mesh is hollow,
+so this also bakes the **caps**: for every position along the axis (every
+`stride` blocks, 4 by default), the cross-section — the faces of the blocks on
+the cut plane that face the removed side — as a node named `cap:x:<at>`, merged
+like the rest. A cap is a few hundred quads, so thirty of them cost less than
+the world. `above` (the default) means the viewer keeps x ≥ at and removes what
+is below; `below` the opposite. Any other glTF viewer shows the caps as thin
+sheets inside the world, which is what the node names are for.
 
 With `--poster`, the same camera renders the still that stands in for the
 scene where WebGL is missing (and on GitHub), so the two match.
@@ -173,9 +177,51 @@ MESHER_JS = r"""
   }
   const nodes = { world: mesh(() => true) };
   if (cut) {
-    const ax = { x: 0, y: 1, z: 2 }[cut.axis];
-    nodes.cut = cut.keep === "above" ? mesh((x, y, z) => [x, y, z][ax] >= cut.at)
-                                     : mesh((x, y, z) => [x, y, z][ax] < cut.at);
+    // A cap: the faces on the cut plane that are NOT already in the world
+    // mesh, i.e. those whose neighbour on the removed side is solid. The
+    // world mesh keeps the faces against air (a cave on the plane stays a
+    // hole), so the two never overlap.
+    const ax = { x: 0, y: 1, z: 2 }[cut.axis], dim = [W, H, D][ax];
+    const above = cut.keep !== "below";
+    const sign = above ? -1 : 1;            // the removed side's direction
+    for (let at = cut.stride; at < dim; at += cut.stride) {
+      // keep above: blocks at coordinate `at`, faces toward at-1
+      // keep below: blocks at coordinate `at-1`, faces toward at
+      const here = above ? at : at - 1;
+      nodes["cap:" + cut.axis + ":" + at] = capMesh(ax, here, sign);
+    }
+  }
+  function capMesh(ax, here, sign) {
+    const dims = [W, H, D], u = (ax + 1) % 3, w = (ax + 2) % 3;
+    const at = (x, y, z) => (x < 0 || y < 0 || z < 0 || x >= W || y >= H || z >= D) ? 0 : world[x + W * z + W * D * y];
+    const out = {}; const bucket = (n) => out[n] || (out[n] = { pos: [], uv: [], col: [], idx: [] });
+    const mask = new Int32Array(dims[u] * dims[w]); const p = [0, 0, 0]; p[ax] = here;
+    let n = 0;
+    for (p[w] = 0; p[w] < dims[w]; p[w]++) for (p[u] = 0; p[u] < dims[u]; p[u]++) {
+      const a = at(p[0], p[1], p[2]); const q = [p[0], p[1], p[2]]; q[ax] += sign; const b = at(q[0], q[1], q[2]);
+      mask[n++] = (a && b && !(b === WATER && a !== WATER)) ? 1 + texIndex(FACES[a][ax === 1 ? (sign > 0 ? 0 : 2) : 1]) : 0;
+    }
+    n = 0;
+    for (let j = 0; j < dims[w]; j++) for (let i = 0; i < dims[u];) {
+      const c = mask[n]; if (!c) { i++; n++; continue; }
+      let ww = 1; while (i + ww < dims[u] && mask[n + ww] === c) ww++;
+      let hh = 1, done = false;
+      for (; j + hh < dims[w]; hh++) { for (let k = 0; k < ww; k++) if (mask[n + k + hh * dims[u]] !== c) { done = true; break; } if (done) break; }
+      const base = [0, 0, 0]; base[ax] = here + (sign > 0 ? 1 : 0); base[u] = i; base[w] = j;
+      const du = [0, 0, 0], dv = [0, 0, 0]; du[u] = ww; dv[w] = hh;
+      const pts = [base, [base[0] + du[0], base[1] + du[1], base[2] + du[2]],
+        [base[0] + du[0] + dv[0], base[1] + du[1] + dv[1], base[2] + du[2] + dv[2]], [base[0] + dv[0], base[1] + dv[1], base[2] + dv[2]]];
+      const g = bucket(names[c - 1]); const lum = ax === 1 ? (sign > 0 ? 1 : 0.5) : ax === 0 ? 0.8 : 0.65;
+      const h = ax === 0 ? 2 : 0, top = base[1] + (ax === 1 ? 0 : du[1] + dv[1]); const v0 = g.pos.length / 3;
+      for (const pt of pts) { g.pos.push(pt[0], pt[1], pt[2]); if (ax === 1) g.uv.push(pt[0] - base[0], pt[2] - base[2]); else g.uv.push(pt[h] - base[h], top - pt[1]); g.col.push(lum, lum, lum); }
+      if (sign > 0) g.idx.push(v0, v0 + 1, v0 + 2, v0, v0 + 2, v0 + 3); else g.idx.push(v0, v0 + 3, v0 + 2, v0, v0 + 2, v0 + 1);
+      for (let l = 0; l < hh; l++) for (let k = 0; k < ww; k++) mask[n + k + l * dims[u]] = 0;
+      i += ww; n += ww;
+    }
+    const b64 = (arr) => { let s = ""; const b = new Uint8Array(arr.buffer); for (let i = 0; i < b.length; i += 8192) s += String.fromCharCode.apply(null, b.subarray(i, i + 8192)); return btoa(s); };
+    return Object.keys(out).map((name) => { const g = out[name]; return { material: name, count: g.pos.length / 3, indices: g.idx.length,
+      pos: b64(Uint8Array.from(g.pos)), uv: b64(Uint8Array.from(g.uv)), col: b64(Uint8Array.from(g.col.map((v) => Math.round(v * 255)))),
+      idx: b64(g.pos.length / 3 > 65535 ? Uint32Array.from(g.idx) : Uint16Array.from(g.idx)) }; });
   }
   return { textures, nodes };
 }
@@ -295,8 +341,8 @@ def main():
     ap.add_argument("program", help="the Lua program to run")
     ap.add_argument("-o", "--output", required=True, help="the .glb to write")
     ap.add_argument("--seed", type=int, default=1, help="the world's seed (graine)")
-    ap.add_argument("--cut", help="also export the cut-away as a node named `cut`: axis,at[,keep] "
-                                  "(x,64 keeps x < 64; x,64,above keeps x >= 64)")
+    ap.add_argument("--cut", help="make the scene cuttable along an axis, with its caps: "
+                                  "axis[,above|below][,stride] (x — keep above, a cap every 4 blocks)")
     ap.add_argument("--poster", help="also render a still of the same world")
     ap.add_argument("--camera", default="-30,72,-30", help="poster camera x,y,z")
     ap.add_argument("--target", default="64,12,64", help="poster look-at x,y,z")
@@ -307,11 +353,12 @@ def main():
     cut = None
     if args.cut:
         parts = args.cut.split(",")
-        axis, at = parts[0], parts[1]
-        keep = parts[2] if len(parts) > 2 else "below"
-        if axis not in ("x", "y", "z") or keep not in ("below", "above"):
-            sys.exit("--cut wants axis,at[,keep]: x,64 or x,64,above")
-        cut = {"axis": axis, "at": int(at), "keep": keep}
+        axis = parts[0]
+        keep = parts[1] if len(parts) > 1 and parts[1] in ("above", "below") else "above"
+        stride = int(parts[-1]) if len(parts) > 1 and parts[-1].isdigit() else 4
+        if axis not in ("x", "y", "z") or stride < 1:
+            sys.exit("--cut wants axis[,above|below][,stride]: x or x,below,8")
+        cut = {"axis": axis, "keep": keep, "stride": stride}
 
     code = Path(args.program).read_text(encoding="utf-8")
     tmp = Path(tempfile.mkdtemp())
@@ -358,7 +405,9 @@ def main():
         glb = build_glb(data, Path(args.program).name)
         Path(args.output).write_bytes(glb)
         quads = sum(p["indices"] // 6 for p in data["nodes"]["world"])
-        extra = f", cut-away {sum(p['indices'] // 6 for p in data['nodes']['cut']):,} quads" if cut else ""
+        caps = [k for k in data["nodes"] if k.startswith("cap:")]
+        extra = (f", {len(caps)} caps of {sum(p['indices'] // 6 for k in caps for p in data['nodes'][k]):,} quads"
+                 if cut else "")
         print(f"wrote {args.output}: {quads:,} quads{extra}, {len(glb) // 1024} KB")
         if args.poster:
             cx, cy, cz = (float(v) for v in args.camera.split(","))
