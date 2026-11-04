@@ -142,6 +142,19 @@ def main():
             print(f"step {n}: {'ok  ' if ok else 'FAIL'} {shown}")
             if not ok:
                 failures.append(f"step {n}: shows {shown}, platform expects {expected(n)}")
+        # The console prompt: the step's own functions, the world, an expression's value.
+        def repl(line):
+            pg.fill("#console-entree", line)
+            pg.press("#console-entree", "Enter")
+            pg.wait_for_function("() => !document.querySelector('#console-entree').disabled")
+            pg.wait_for_timeout(300)
+            return pg.inner_text("#console").strip().split("\n")[-1], pg.inner_text("#console-invite")
+        got = [repl(l) for l in ("1 + 1", "lire(64, 0, 64) == SOCLE", "if true then", "afficher(7) end",
+                                  "bloc(64, 60, 64, DIAMANT)", "lire(64, 60, 64)")]
+        print("console prompt:", got)
+        want = [("2", ">"), ("true", ">"), ("> if true then", ">>"), ("7", ">"), ("> bloc(64, 60, 64, DIAMANT)", ">"), ("13", ">")]
+        if got != want:
+            failures.append(f"console prompt: got {got}, wanted {want}")
         # Platform mode hides the app's own copy of the workshop text.
         visible = pg.evaluate("()=>[...document.querySelectorAll('#consignes > *')]"
                               ".filter(e=>getComputedStyle(e).display!=='none').map(e=>e.id||e.className)")

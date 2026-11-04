@@ -16,6 +16,8 @@ for i = 0, __NB_BLOCS - 1 do VALIDE[i] = true end
 local M = {}
 for i = 1, TX * TX * TY do M[i] = 0 end
 __hors_monde = 0
+-- Compté par bloc : la console sait ainsi qu'une ligne tapée a changé le monde.
+__modifs = 0
 
 function bloc(x, y, z, b)
   if type(x) ~= "number" or type(y) ~= "number" or type(z) ~= "number" then
@@ -34,6 +36,7 @@ function bloc(x, y, z, b)
     return
   end
   M[x + TX * (z + TX * y) + 1] = b
+  __modifs = __modifs + 1
 end
 
 function lire(x, y, z)
@@ -147,6 +150,38 @@ function __lancer()
   debug.sethook()
   if ok then return "ok", "", "" end
   return "execution", e, trace
+end
+
+-- L'invite de la console. Elle tourne dans le MÊME état Lua que le code de
+-- l'élève : ses fonctions et ses variables globales sont visibles, et le
+-- monde est celui de la dernière génération. On tente d'abord un return
+-- implicite, pour qu'une expression seule affiche sa valeur (« 1 + 1 » donne
+-- 2) ; sinon la ligne est chargée telle quelle. Un morceau qui s'arrête avant
+-- sa fin (un « if » sans son « end ») est signalé par Lua avec « <eof> » : on
+-- renvoie "incomplet", et la console attend la ligne suivante.
+-- Renvoie "ok" et la valeur affichable, "incomplet", ou "syntaxe" / "execution"
+-- et le message.
+function __evaluer(src)
+  local chunk, err = load("return " .. src, "=console", "t", _ENV)
+  if not chunk then
+    chunk, err = load(src, "=console", "t", _ENV)
+    if not chunk then
+      local e = tostring(err)
+      if e:sub(-5) == "<eof>" or e:sub(-7) == "'<eof>'" then return "incomplet" end
+      return "syntaxe", e
+    end
+  end
+  local debut = os.clock()
+  debug.sethook(function()
+    if os.clock() - debut > __limite then error("__TEMPS_DEPASSE__", 2) end
+  end, "", 20000)
+  local r = table.pack(pcall(chunk))
+  debug.sethook()
+  if not r[1] then return "execution", tostring(r[2]) end
+  if r.n < 2 then return "ok" end
+  local morceaux = {}
+  for i = 2, r.n do morceaux[i - 1] = tostring(r[i]) end
+  return "ok", table.concat(morceaux, "  ")
 end
 
 -- Le monde, en une chaîne d'un caractère par case (le type de bloc plus

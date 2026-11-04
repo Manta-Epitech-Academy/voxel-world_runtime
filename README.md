@@ -24,6 +24,11 @@ module, avec le même comportement et les mêmes textes. Trois différences voul
   n'apparaît que l'élève n'ait tapé. Pas de parenthèse fermée toute seule, pas de liste de
   suggestions pendant la frappe (elle reste disponible par Ctrl + Espace), pas de reformatage.
   La bulle de documentation au survol d'une fonction reste.
+- **La console est aussi une invite Lua**, comme dans le runtime Pac-Man : sous ce que le code
+  affiche, une ligne où taper du Lua et appuyer sur Entrée. Elle tourne dans l'état laissé par la
+  dernière génération : les fonctions de l'élève sont visibles, `lire` regarde le monde affiché,
+  et un `bloc(...)` tapé là pose le bloc dans la vue. Une expression seule affiche sa valeur ;
+  un morceau sur plusieurs lignes (un `if` sans son `end`) fait passer l'invite à `>>`.
 - **Pas de corrigés.** Le bouton « Corrigé précédent » et les sept solutions ne sont pas dans
   les sources : un élève n'a jamais le code d'une étape qu'il doit écrire.
 
@@ -33,7 +38,7 @@ module, avec le même comportement et les mêmes textes. Trois différences voul
 | `src/main.js` | le point d'entrée : relie l'éditeur, l'exécution, la vue 3D, les consignes, la progression |
 | `src/blocs.js` | les types de bloc, la taille du monde, `index(x, y, z)` |
 | `src/lua/prelude.lua` | ce que le code de l'élève trouve défini : `bloc`, `lire`, `bruit`, `bruit3d`, `hasard`, `afficher` |
-| `src/lua/worker.js` | le worker qui exécute le Lua (wasmoon), coupé de la page |
+| `src/lua/worker.js` | le worker qui exécute le Lua (wasmoon), coupé de la page ; garde l'état pour l'invite |
 | `src/executeur.js` | côté page : lance le worker, le relance après une boucle infinie |
 | `src/erreurs.js` | les erreurs de Lua traduites pour un débutant |
 | `src/editeur.js` | Monaco : thème, complétion, documentation au survol, réglage débutant |
@@ -41,7 +46,7 @@ module, avec le même comportement et les mêmes textes. Trois différences voul
 | `src/deplacement.js`, `src/monde3d.js` | le vol et la marche ; la scène three.js |
 | `src/etapes/` | les sept étapes : leur texte, et les défis qui vérifient le monde |
 | `src/verifications.js` | les outils communs aux défis (couches, hauteurs, marches) |
-| `src/consignes.js`, `src/console.js` | le panneau des consignes, la console |
+| `src/consignes.js`, `src/console.js` | le panneau des consignes ; la console et son invite Lua |
 | `src/disposition.js` | les panneaux (dockview) |
 | `src/plateforme.js` | ce que la plateforme d'atelier attend : code de validation, mode plateforme |
 | `scripts/export_scene.py` | exporte un monde en scène glTF (`.glb`) pour le sujet |

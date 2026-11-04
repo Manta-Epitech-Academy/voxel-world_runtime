@@ -36,8 +36,14 @@
       <div id="editeur" class="editeur"></div>
     </section>
 
-    <section id="panneau-console" class="panneau" aria-label="Console" hidden>
+    <section id="panneau-console" class="panneau console-panneau" aria-label="Console" hidden>
       <pre id="console" class="console" aria-live="polite"></pre>
+      <div class="console-saisie">
+        <span id="console-invite" class="console-invite" aria-hidden="true">&gt;</span>
+        <input id="console-entree" class="console-entree" type="text" spellcheck="false" autocomplete="off"
+               aria-label="Tape du code Lua et appuie sur Entrée">
+        <button id="vider-console" class="console-vider" type="button" title="Vider la console">Vider</button>
+      </div>
     </section>
 
     <section id="panneau-monde" class="panneau" aria-label="Monde 3D" hidden>

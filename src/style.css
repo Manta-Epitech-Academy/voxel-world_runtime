@@ -284,9 +284,11 @@ kbd {
 
 /* ---- la console ---- */
 
+.console-panneau { display: grid; grid-template-rows: 1fr auto; }
+
 .console {
   margin: 0;
-  height: 100%;
+  min-height: 0;
   padding: 6px 10px;
   overflow: auto;
   background: var(--code);
@@ -296,6 +298,39 @@ kbd {
 .console .erreur { color: var(--erreur); font-weight: 600; }
 .console .alerte { color: var(--alerte); }
 .console .gris { color: var(--doux); }
+.console .echo { color: #8fd3a0; }
+.console .valeur { color: var(--ciel); }
+
+.console-saisie {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-top: 1px solid var(--bord);
+  background: var(--code);
+}
+.console-invite { color: #8fd3a0; font-family: ui-monospace, SF Mono, Menlo, Consolas, monospace; font-size: 13px; }
+.console-entree {
+  flex: 1;
+  min-width: 0;
+  padding: 3px 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--texte);
+  font: 13px ui-monospace, SF Mono, Menlo, Consolas, monospace;
+}
+.console-entree::placeholder { color: #5c6370; font-family: inherit; }
+.console-vider {
+  padding: 1px 8px;
+  border: 1px solid var(--bord);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--doux);
+  font: 11px system-ui, sans-serif;
+  cursor: pointer;
+}
+.console-vider:hover { color: var(--texte); border-color: var(--doux); }
 
 /* ---- le monde ---- */
 

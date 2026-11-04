@@ -5,10 +5,10 @@ import "./plateforme.js";
 import { NB_CASES } from "./blocs.js";
 import { ETAPES, verifierEtape } from "./etapes/index.js";
 import { Editeur } from "./editeur.js";
-import { executer, LIMITE_SECONDES } from "./executeur.js";
+import { executer, evaluer, LIMITE_SECONDES } from "./executeur.js";
 import { expliquerErreur } from "./erreurs.js";
 import { Monde3D } from "./monde3d.js";
-import { afficherConsole } from "./console.js";
+import { afficherConsole, ajouterConsole, initConsole } from "./console.js";
 import { afficherConsignes, afficherDefis } from "./consignes.js";
 import { monterDisposition } from "./disposition.js";
 import { stockage } from "./stockage.js";
@@ -88,15 +88,7 @@ async function generer() {
       "alerte",
     ]);
   }
-  if (resultat.erreur) {
-    const explication = expliquerErreur(resultat.erreur, LIMITE_SECONDES, code);
-    const ligne = resultat.erreur.ligne;
-    lignes.push([(ligne ? `❌ Ligne ${ligne} : ` : "❌ ") + explication, "erreur"]);
-    if (resultat.erreur.brut !== explication && resultat.erreur.type !== "temps") {
-      lignes.push([`   (message de Lua : ${resultat.erreur.brut})`, "gris"]);
-    }
-    if (ligne) editeur.montrerErreur(ligne, explication);
-  }
+  if (resultat.erreur) lignes.push(...lignesErreur(resultat.erreur, code, true));
   afficherConsole(lignes);
   if (resultat.erreur) disposition.montrer("console");
 
@@ -116,6 +108,46 @@ async function generer() {
   bouton.disabled = false;
   bouton.textContent = "▶ Générer";
   etat.enCours = false;
+}
+
+/** Une erreur de Lua, en lignes pour la console (et dans l'éditeur si elle a une ligne). */
+function lignesErreur(erreur, code, dansEditeur) {
+  const explication = expliquerErreur(erreur, LIMITE_SECONDES, code);
+  const { ligne } = erreur;
+  const lignes = [[(ligne && dansEditeur ? `❌ Ligne ${ligne} : ` : "❌ ") + explication, "erreur"]];
+  if (erreur.brut !== explication && erreur.type !== "temps") {
+    lignes.push([`   (message de Lua : ${erreur.brut})`, "gris"]);
+  }
+  if (ligne && dansEditeur) editeur.montrerErreur(ligne, explication);
+  return lignes;
+}
+
+/** Une ligne tapée dans la console : évaluée dans l'état Lua de la dernière génération. */
+async function evaluerLigne(src) {
+  if (etat.enCours) {
+    ajouterConsole([["Attends la fin de la génération.", "gris"]]);
+    return { incomplet: false };
+  }
+  const resultat = await evaluer(src, Math.floor(Number(graine.value)) || 0);
+  if (resultat.incomplet) return { incomplet: true };
+  const lignes = resultat.sorties.map((s) => [s]);
+  if (resultat.tronque) lignes.push(["… (la suite de la console est coupée)", "gris"]);
+  if (resultat.valeur !== null && resultat.valeur !== undefined) lignes.push([resultat.valeur, "valeur"]);
+  if (resultat.erreur) {
+    lignes.push(...lignesErreur(resultat.erreur, src, false));
+    if (resultat.perdu) {
+      lignes.push([
+        "La console repart d'un état neuf : clique sur ▶ Générer pour retrouver ton monde.",
+        "gris",
+      ]);
+    }
+  }
+  ajouterConsole(lignes);
+  if (resultat.monde) {
+    const triangles = rendu.afficherMonde(resultat.monde);
+    $("statut").textContent = `${nombre(triangles)} triangles · modifié depuis la console`;
+  }
+  return { incomplet: false };
 }
 
 /** Passe les défis de l'étape sur le dernier monde généré, et retient ceux qui sont réussis. */
@@ -206,6 +238,8 @@ $("disposition").addEventListener("click", (ev) => {
   disposition.reinitialiser();
   ev.currentTarget.blur();
 });
+
+initConsole({ onLigne: evaluerLigne });
 
 // ---- au départ ----------------------------------------------------------
 

@@ -28,16 +28,22 @@ function relancer() {
   worker.postMessage({ type: "init" });
 }
 
+/** Le résultat d'un worker relancé : rien, et l'état Lua est perdu. */
 function resultatVide(erreur) {
-  return { monde: null, sorties: [], horsMonde: 0, appels: {}, erreur };
+  return {
+    monde: null,
+    sorties: [],
+    horsMonde: 0,
+    appels: {},
+    erreur,
+    valeur: null,
+    incomplet: false,
+    perdu: true,
+  };
 }
 
-/**
- * Exécute le code et renvoie le résultat du worker :
- * { monde, sorties, tronque, erreur, horsMonde, appels, duree }.
- * Ne rejette jamais : un plantage ou un arrêt forcé est une `erreur` du résultat.
- */
-export function executer(code, graine, limite = LIMITE_SECONDES) {
+/** Envoie une demande au worker et attend sa réponse, le chien de garde en main. */
+function demander(type, code, graine, limite) {
   if (!worker) relancer();
   const id = ++compteur;
   return new Promise((resoudre) => {
@@ -60,6 +66,24 @@ export function executer(code, graine, limite = LIMITE_SECONDES) {
       }
     };
     worker.addEventListener("message", recevoir);
-    worker.postMessage({ type: "executer", id, code, graine, limite });
+    worker.postMessage({ type, id, code, graine, limite });
   });
+}
+
+/**
+ * Exécute le code et renvoie le résultat du worker :
+ * { monde, sorties, tronque, erreur, horsMonde, appels, duree }.
+ * Ne rejette jamais : un plantage ou un arrêt forcé est une `erreur` du résultat.
+ */
+export function executer(code, graine, limite = LIMITE_SECONDES) {
+  return demander("executer", code, graine, limite);
+}
+
+/**
+ * Évalue une ligne de la console dans l'état Lua de la dernière exécution :
+ * { sorties, tronque, valeur, erreur, incomplet, monde } — `monde` seulement
+ * si la ligne a posé des blocs. Un arrêt forcé perd cet état.
+ */
+export function evaluer(code, graine, limite = LIMITE_SECONDES) {
+  return demander("evaluer", code, graine, limite);
 }
