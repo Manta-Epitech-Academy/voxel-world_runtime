@@ -8,7 +8,7 @@ une seule page. Le code de l'élève est du **Lua**, exécuté dans le navigateu
 plateforme l'affiche à côté de ce runtime. Ouverte seule, la page reste utilisable : elle garde
 sa propre copie du texte des étapes.
 
-Essayer : <https://manta-epitech-academy.github.io/voxel-world_runtime/sources/>
+Essayer : <https://manta-epitech-academy.github.io/voxel-world_runtime/>
 
 ## Les sources
 
@@ -96,8 +96,7 @@ scènes ; les élèves en ont cinq).
 
 ## Déploiement
 
-- **GitHub Pages** (`.github/workflows/pages.yml`) : la racine du site reste la page d'origine
-  de la branche `wrp-port`, que `ctf-0110.epiboost.fr` affiche ; le build des sources est sous
-  `/sources/`.
+- **GitHub Pages** (`.github/workflows/pages.yml`) : le build de `main`, à la racine du site, que
+  `ctf-0110.epiboost.fr` affiche comme runtime externe — chaque push sur `main` y est en ligne.
 - **Image Docker** (`.github/workflows/docker.yml`) : construit par le `Dockerfile` (Node pour
   le build, nginx pour servir) et publiée sur GHCR à chaque push sur `main`.

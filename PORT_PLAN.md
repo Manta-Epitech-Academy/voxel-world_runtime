@@ -9,12 +9,10 @@ The app has been reverse-engineered into readable sources on branch `sources`
 (README.md lists the modules). The build replaces the patched page: no more
 `scripts/port.py`, no more `embed.js` (now `src/plateforme.js`). Three changes
 on purpose: dockview panels, Monaco's beginner settings, and the solutions
-gone for good. GitHub Pages serves the build under `/sources/`, the root staying
-the `wrp-port` page that ctf-0110 frames. When `sources` is merged to main:
-`tools/build_runtime.sh` in the platform must switch the `voxel-world` case
-from `KIND="static"` to a Vite build (as `tic80`), the adapter's STORAGE_KEYS
-can add `mwg.disposition`, and the subject's `deploy/ctf-0110` branch can
-point at the root again once the Pages workflow deploys the build there.
+gone for good. Merged to main the same day: GitHub Pages serves the build from main at
+the root, which ctf-0110 frames; the platform's `tools/build_runtime.sh`
+builds `voxel-world` with Vite (as `tic80`), and its adapter saves
+`mwg.disposition`.
 
 ## Short version
 
@@ -31,9 +29,10 @@ shape, not the target one:
 
 - **Content:** subject branch `deploy/ctf-0110`, imported with `tools/sync_subject.py`. The
   instance's `workshop_source` points to that branch, so the admin sync page re-imports it.
-- **Runtime:** served by **GitHub Pages from this repo's `wrp-port` branch**, framed as an
-  `external` runtime with `?plateforme=1`. That hides the app's copy of the text and keeps its
-  step list. Warning: **every push to `wrp-port` changes what ctf-0110 serves**, straight away.
+- **Runtime:** served by **GitHub Pages, built from `main`** (since 2026-11-04; the `wrp-port`
+  page before), framed as an `external` runtime with `?plateforme=1`. That hides the app's copy
+  of the text and keeps its step list. Warning: **every push to `main` changes what ctf-0110
+  serves**, straight away.
   The pinned `version` is ignored for an external runtime.
 - **Validation:** instructor codes (`checkpoint`), because a cross-origin frame cannot receive the
   token secret. The codes are in the admin answer sheet, and in Kevin's local `~/.secrets`.
