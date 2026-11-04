@@ -1,21 +1,24 @@
 #!/usr/bin/env python3
-"""End-to-end check of the ported runtime, in a headless Chromium.
+"""End-to-end check of the built runtime (dist/), in a headless Chromium.
 
+    npm run build
     python3 tests/check.py <World-Generator.zip>
 
-The zip is the original archive (main branch). It is read for its solutions
-only, which this test needs twice: to prove none of them is left in
-index.html, and to drive each step to green. Needs Playwright with Chromium.
+The zip is the original single-file archive (`git show ab2d5b3:World-Generator.zip`).
+It is read for its solutions only, which this test needs twice: to prove none
+of them is in the build, and to drive each step to green. Needs Playwright
+with Chromium.
 
 For every step N it loads N's official solution into the editor, clicks
 « Générer », and checks that the token box shows exactly what the platform
 computes for that step: monde{HMAC-SHA256(secret, "voxel-world:N")[:12]}.
 """
-import functools, hashlib, hmac, http.server, json, socketserver, sys, threading, zipfile
+import functools, hashlib, hmac, http.server, socketserver, sys, threading, zipfile
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parent.parent
+DIST = ROOT / "dist"
 SECRET = "test-secret-not-a-real-one"
 
 
@@ -35,30 +38,21 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
 
 
 def serve():
-    handler = functools.partial(Quiet, directory=str(ROOT))
+    handler = functools.partial(Quiet, directory=str(DIST))
     httpd = socketserver.TCPServer(("127.0.0.1", 0), handler)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     return httpd
 
 
-def flight(browser):
+def flight(browser, url):
     """Fly mode: Z/S (codes KeyW/KeyS) follow the crosshair, Q/D stay level.
 
-    The page does not expose its camera, and a test hook has no place in what
-    students get. So this serves a throwaway copy that exposes the world object
-    (`window.__monde`), places the camera, holds real keys, and measures.
+    The page exposes its pieces on `window.__mwg` (main.js): the camera is
+    placed through `__mwg.rendu.vol`, then real keys are held and measured.
     """
-    import math, shutil, tempfile
-    tmp = Path(tempfile.mkdtemp())
-    page = (ROOT / "index.html").read_text(encoding="utf-8")
-    hook = 'co("recentrer").addEventListener("click",()=>Hy.recentrer());'
-    assert page.count(hook) == 1, "flight test: the hook anchor moved"
-    (tmp / "index.html").write_text(page.replace(hook, "window.__monde=Hy;" + hook), encoding="utf-8")
-    shutil.copy(ROOT / "embed.js", tmp / "embed.js")
-    httpd = socketserver.TCPServer(("127.0.0.1", 0), functools.partial(Quiet, directory=str(tmp)))
-    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    import math
     pg = browser.new_page(viewport={"width": 1280, "height": 800})
-    pg.goto(f"http://127.0.0.1:{httpd.server_address[1]}/index.html")
+    pg.goto(url)
     pg.wait_for_selector("#generer")
     pg.wait_for_timeout(500)
     box = pg.locator("#monde canvas").last.bounding_box()
@@ -66,12 +60,12 @@ def flight(browser):
     pg.wait_for_timeout(300)
 
     def move(key, pitch):
-        pg.evaluate(f"__monde.vol.placer(64, 40, 64, 0, {pitch})")
+        pg.evaluate(f"__mwg.rendu.vol.placer(64, 40, 64, 0, {pitch})")
         pg.wait_for_timeout(100)
-        before = pg.evaluate("(({x,y,z})=>[x,y,z])(__monde.vol.camera.position)")
+        before = pg.evaluate("(({x,y,z})=>[x,y,z])(__mwg.rendu.vol.camera.position)")
         pg.keyboard.down(key); pg.wait_for_timeout(400); pg.keyboard.up(key)
         pg.wait_for_timeout(100)
-        after = pg.evaluate("(({x,y,z})=>[x,y,z])(__monde.vol.camera.position)")
+        after = pg.evaluate("(({x,y,z})=>[x,y,z])(__mwg.rendu.vol.camera.position)")
         return [round(a - b, 2) for a, b in zip(after, before)]
 
     problems = []
@@ -93,8 +87,6 @@ def flight(browser):
     if abs(side[1]) > 0.01 or side[0] < 0.5:
         problems.append(f"strafing should stay level: {side}")
     pg.close()
-    httpd.shutdown()
-    shutil.rmtree(tmp, ignore_errors=True)
     return problems
 
 
@@ -102,7 +94,8 @@ def main():
     sols = solutions(sys.argv[1])
     with zipfile.ZipFile(sys.argv[1]) as z:
         original = z.read("World-Generator/World-Generator.html").decode()
-    page = (ROOT / "index.html").read_text(encoding="utf-8")
+    page = "\n".join(f.read_text(encoding="utf-8", errors="ignore")
+                     for f in DIST.rglob("*") if f.suffix in (".html", ".js", ".css"))
 
     def shown_to_students(line):
         """A line the workshop text itself shows (a toolbox example) also sits
@@ -116,9 +109,9 @@ def main():
         long_lines = {l.strip() for l in code.splitlines() if len(l.strip()) > 30}
         leaked = [l for l in long_lines if l in page and not shown_to_students(l)]
         if code.strip() in page or leaked:
-            failures.append(f"step {n}: solution text still in index.html: {leaked[:1]}")
-    if "corrige" in page.lower() or "corrigé" in page.lower():
-        failures.append("index.html still mentions the corrigés")
+            failures.append(f"step {n}: solution text still in the build: {leaked[:1]}")
+    if "corrigé" in page.lower():
+        failures.append("the build still mentions the corrigés")
 
     httpd = serve()
     url = f"http://127.0.0.1:{httpd.server_address[1]}/index.html"
@@ -183,7 +176,7 @@ def main():
             failures.append(f"?plateforme=1 does not hide the text or hides the step list: {shown}")
         if len(tokens) < 7:
             failures.append(f"wg:jeton fired {len(tokens)} times, expected 7")
-        failures.extend(flight(browser))
+        failures.extend(flight(browser, url))
         browser.close()
     httpd.shutdown()
     for f in failures:

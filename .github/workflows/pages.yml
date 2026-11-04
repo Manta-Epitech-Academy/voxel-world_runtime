@@ -1,0 +1,60 @@
+name: GitHub Pages
+
+# Publishes the app to https://manta-epitech-academy.github.io/voxel-world_runtime/.
+#
+# The site has two halves, because ctf-0110.epiboost.fr frames the ROOT of
+# this site as an external runtime (PORT_PLAN.md, "Interim deployment"):
+#   /          the legacy single-file page, exactly the `wrp-port` branch —
+#              what that instance has always served, untouched;
+#   /sources/  the app built from these sources (branch `sources`).
+# Once the sources are merged to main and the instance re-synced, the build
+# can take the root.
+on:
+  push:
+    branches: [sources]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          ref: wrp-port
+          path: legacy
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+
+      - name: Assemble the site
+        run: |
+          mkdir -p site/sources
+          cp legacy/index.html legacy/embed.js site/
+          cp -r dist/. site/sources/
+          touch site/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

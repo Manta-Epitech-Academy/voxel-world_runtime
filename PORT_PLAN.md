@@ -3,6 +3,19 @@
 State on 2026-11-01. Deadline: **14/11**. Edouard announces the subject for Coding Clubs from
 14/11 to 15/12, and Nancy (Yohann) runs it at the end of November as a one-day session.
 
+## The sources (2026-11-04)
+
+The app has been reverse-engineered into readable sources on branch `sources`
+(README.md lists the modules). The build replaces the patched page: no more
+`scripts/port.py`, no more `embed.js` (now `src/plateforme.js`). Three changes
+on purpose: dockview panels, Monaco's beginner settings, and the solutions
+gone for good. GitHub Pages serves the build under `/sources/`, the root staying
+the `wrp-port` page that ctf-0110 frames. When `sources` is merged to main:
+`tools/build_runtime.sh` in the platform must switch the `voxel-world` case
+from `KIND="static"` to a Vite build (as `tic80`), the adapter's STORAGE_KEYS
+can add `mwg.disposition`, and the subject's `deploy/ctf-0110` branch can
+point at the root again once the Pages workflow deploys the build there.
+
 ## Short version
 
 The subject runs on the platform, and step 1 was completed end to end on a local CTFd. The

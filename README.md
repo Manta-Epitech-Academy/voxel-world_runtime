@@ -5,37 +5,74 @@ une seule page. Le code de l'élève est du **Lua**, exécuté dans le navigateu
 
 **Ce dépôt ne contient pas le sujet de l'atelier**, il vit dans
 [voxel-world_subject](https://github.com/Manta-Epitech-Academy/voxel-world_subject) et la
-plateforme l'affiche à côté de ce runtime. Ouvert seul, `index.html` reste utilisable.
+plateforme l'affiche à côté de ce runtime. Ouverte seule, la page reste utilisable : elle garde
+sa propre copie du texte des étapes.
 
-## Ce qu'il y a ici
+Essayer : <https://manta-epitech-academy.github.io/voxel-world_runtime/sources/>
 
-| Fichier | Rôle |
+## Les sources
+
+L'application d'origine n'existait que sous la forme d'une page minifiée (`World-Generator.zip`,
+un build Vite d'un seul fichier). Elle a été reconstituée ici en sources lisibles, module par
+module, avec le même comportement et les mêmes textes. Trois différences voulues :
+
+- **Les panneaux sont posés par [dockview](https://dockview.dev)**, comme dans l'éditeur TIC-80 de
+  l'organisation : on les redimensionne, on les déplace par leur onglet, on agrandit un groupe
+  à toute la page (⛶), et la disposition est gardée dans le navigateur. La console est un
+  panneau à part, sous le code. « ⊞ Disposition » remet tout en place.
+- **L'éditeur Monaco est réglé pour un débutant**, comme dans le runtime Pac-Man : rien
+  n'apparaît que l'élève n'ait tapé. Pas de parenthèse fermée toute seule, pas de liste de
+  suggestions pendant la frappe (elle reste disponible par Ctrl + Espace), pas de reformatage.
+  La bulle de documentation au survol d'une fonction reste.
+- **Pas de corrigés.** Le bouton « Corrigé précédent » et les sept solutions ne sont pas dans
+  les sources : un élève n'a jamais le code d'une étape qu'il doit écrire.
+
+| Dossier / fichier | Rôle |
 |---|---|
-| `index.html` | la page servie : l'application d'origine, corrigés retirés, construite par `scripts/port.py` |
-| `embed.js` | ce que la plateforme ajoute : le code de validation de chaque étape, le mode plateforme |
-| `scripts/port.py` | fabrique `index.html` à partir de `World-Generator.zip` |
-| `tests/check.py` | vérifie qu'aucun corrigé ne reste, et que les 7 étapes donnent le bon code |
-| `PORT_PLAN.md` | état du portage et ce qui reste à faire |
+| `index.html` | la page : la barre du haut et le contenu de chaque panneau |
+| `src/main.js` | le point d'entrée : relie l'éditeur, l'exécution, la vue 3D, les consignes, la progression |
+| `src/blocs.js` | les types de bloc, la taille du monde, `index(x, y, z)` |
+| `src/lua/prelude.lua` | ce que le code de l'élève trouve défini : `bloc`, `lire`, `bruit`, `bruit3d`, `hasard`, `afficher` |
+| `src/lua/worker.js` | le worker qui exécute le Lua (wasmoon), coupé de la page |
+| `src/executeur.js` | côté page : lance le worker, le relance après une boucle infinie |
+| `src/erreurs.js` | les erreurs de Lua traduites pour un débutant |
+| `src/editeur.js` | Monaco : thème, complétion, documentation au survol, réglage débutant |
+| `src/textures.js`, `src/maillage.js` | l'atlas de textures dessiné au pixel, et les chunks de triangles |
+| `src/deplacement.js`, `src/monde3d.js` | le vol et la marche ; la scène three.js |
+| `src/etapes/` | les sept étapes : leur texte, et les défis qui vérifient le monde |
+| `src/verifications.js` | les outils communs aux défis (couches, hauteurs, marches) |
+| `src/consignes.js`, `src/console.js` | le panneau des consignes, la console |
+| `src/disposition.js` | les panneaux (dockview) |
+| `src/plateforme.js` | ce que la plateforme d'atelier attend : code de validation, mode plateforme |
+| `scripts/export_scene.py` | exporte un monde en scène glTF (`.glb`) pour le sujet |
+| `tests/check.py` | vérifie les sept étapes de bout en bout, le mode plateforme et le vol |
 
-## Pas de sources lisibles
-
-Il n'existe pas de sources pour cette application, seulement la page d'origine, un build Vite
-minifié en un seul fichier (Monaco, three.js et wasmoon inclus), rangée dans
-`World-Generator.zip` sur la branche `main`. Le portage ne reconstruit donc pas l'application :
-il **patche** cette page. Chaque patch est une chaîne exacte qui doit apparaître une seule
-fois, sinon le script s'arrête et dit lequel ne s'applique plus.
+## Développement
 
 ```sh
-git show main:World-Generator.zip > /tmp/World-Generator.zip
-python3 scripts/port.py /tmp/World-Generator.zip           # écrit index.html
-python3 tests/check.py /tmp/World-Generator.zip            # Playwright + Chromium
+npm install
+npm run dev        # http://localhost:5173
+npm run build      # dist/
 ```
+
+Le test de bout en bout a besoin de Playwright avec Chromium, et des solutions officielles, qui
+ne sont pas dans les sources : elles sont dans l'archive d'origine, gardée dans l'historique.
+
+```sh
+git show ab2d5b3:World-Generator.zip > /tmp/World-Generator.zip
+npm run build
+python3 tests/check.py /tmp/World-Generator.zip
+```
+
+Pour chaque étape, le test charge la solution, clique sur « ▶ Générer », et vérifie que le code
+de validation affiché est celui que la plateforme attend. Il vérifie aussi qu'aucune ligne des
+solutions n'est dans le build.
 
 ## Validation des étapes
 
 Chaque étape a une liste de défis que l'application vérifie au clic sur « ▶ Générer ». Quand
-tous sont au vert, et que la plateforme a fourni son secret, `embed.js` affiche un code de
-validation :
+tous sont au vert, et que la plateforme a fourni son secret, `src/plateforme.js` affiche un
+code de validation :
 
 ```
 monde{ 12 premiers caractères hexadécimaux de HMAC-SHA256(secret, "voxel-world:<n° d'étape>") }
@@ -43,12 +80,24 @@ monde{ 12 premiers caractères hexadécimaux de HMAC-SHA256(secret, "voxel-world
 
 La plateforme calcule la même valeur et en fait le flag de l'étape. Le secret est propre à
 chaque instance, donc un code ne sert pas d'une session à l'autre. Le code Lua de l'élève ne
-peut pas lire ce secret : wasmoon tourne sans accès au JavaScript de la page
+peut pas lire ce secret : wasmoon tourne dans un worker sans accès au JavaScript de la page
 (`injectObjects` et `enableProxy` désactivés).
 
 ## Intégration dans la plateforme
 
-Servi à l'identique sous `/runtime/voxel-world/<version>/` (toutes les URL sont relatives).
-L'adaptateur `voxel-world.js` côté plateforme transmet le secret, suit l'étape lue par le
-participant et recopie le code de validation dans la case de l'étape. Le code de l'élève est
-sauvegardé dans `localStorage`, clés `mwg.*`.
+Servi à l'identique sous `/runtime/voxel-world/<version>/` (toutes les adresses sont relatives,
+`base: "./"` dans `vite.config.js`). L'adaptateur `voxel-world.js` côté plateforme transmet le
+secret, suit l'étape lue par le participant et recopie le code de validation dans la case de
+l'étape. Le code de l'élève est sauvegardé dans `localStorage`, clés `mwg.*`.
+
+Deux paramètres d'adresse : `?plateforme=1` (mode plateforme sans hôte, pour un runtime servi
+depuis une autre origine) et `?limite=600` (les secondes accordées au code, pour l'export de
+scènes ; les élèves en ont cinq).
+
+## Déploiement
+
+- **GitHub Pages** (`.github/workflows/pages.yml`) : la racine du site reste la page d'origine
+  de la branche `wrp-port`, que `ctf-0110.epiboost.fr` affiche ; le build des sources est sous
+  `/sources/`.
+- **Image Docker** (`.github/workflows/docker.yml`) : construit par le `Dockerfile` (Node pour
+  le build, nginx pour servir) et publiée sur GHCR à chaque push sur `main`.

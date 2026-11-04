@@ -37,26 +37,24 @@ sheets inside the world, which is what the node names are for.
 With `--poster`, the same camera renders the still that stands in for the
 scene where WebGL is missing (and on GitHub), so the two match.
 
-Needs Playwright with Chromium and the runtime's index.html beside this script
-(built by scripts/port.py). The page does not expose its world object, and a
-hook for this has no place in what students get, so a scratch copy with the
-hook is served, as tests/check.py does. The meshing runs in the page, in
-JavaScript, because a million cells is a long loop in Python.
+Needs Playwright with Chromium and the built runtime in dist/ (`npm run
+build`). The page exposes its pieces on `window.__mwg` (src/main.js), which
+is where the world comes from. The meshing runs in the page, in JavaScript,
+because a million cells is a long loop in Python.
 """
 import argparse
 import base64
 import functools
 import http.server
 import json
-import shutil
 import socketserver
 import struct
 import sys
-import tempfile
 import threading
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+DIST = ROOT / "dist"
 
 # Runs in the scratch page once the world is generated. Returns the textures as
 # PNG data URLs and, per material, the merged quads of the world (and of its
@@ -64,7 +62,7 @@ ROOT = Path(__file__).resolve().parent.parent
 MESHER_JS = r"""
 ([cut]) => {
   const W = 128, H = 64, D = 128, WATER = 6;
-  const world = __monde.vol.corps.monde;
+  const world = __mwg.rendu.vol.corps.monde;
   /* ---- the runtime's textures, same generators, same seeds ---- */
   const rng = (seed) => { let e = seed >>> 0; return () => { e = (e + 1831565813) >>> 0; let t = e;
     t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
@@ -361,27 +359,17 @@ def main():
         cut = {"axis": axis, "keep": keep, "stride": stride}
 
     code = Path(args.program).read_text(encoding="utf-8")
-    tmp = Path(tempfile.mkdtemp())
-    page = (ROOT / "index.html").read_text(encoding="utf-8")
-    hook = 'co("recentrer").addEventListener("click",()=>Hy.recentrer());'
-    if page.count(hook) != 1:
-        sys.exit("the hook anchor is not in index.html: rebuild it with scripts/port.py")
     # Students get five seconds per run, a kindness for an infinite loop. A
     # headless build on a loaded machine can need more for the full generator,
     # and a world cut short is the wrong scene (no trees, half the ore), so the
-    # scratch copy allows ten minutes — and any run that is still cut is refused.
-    # Two timers: the Lua hook's limit (seconds), and the page's own watchdog
-    # that kills the worker after nine seconds whatever Lua says.
-    limit, watchdog = "limite:$=5}", "},9*1e3)"
-    if page.count(limit) != 1 or page.count(watchdog) != 1:
-        sys.exit("the time-limit anchors are not in index.html: rebuild it with scripts/port.py")
-    page = (page.replace(hook, "window.__monde=Hy;" + hook)
-                .replace(limit, "limite:$=600}").replace(watchdog, "},600*1e3)"))
-    (tmp / "index.html").write_text(page, encoding="utf-8")
-    shutil.copy(ROOT / "embed.js", tmp / "embed.js")
-    httpd = socketserver.TCPServer(("127.0.0.1", 0), functools.partial(Quiet, directory=str(tmp)))
+    # page is opened with `?limite=600` (src/executeur.js: ten minutes for the
+    # Lua hook, and the page's own watchdog follows) — and any run that is
+    # still cut is refused below.
+    if not (DIST / "index.html").exists():
+        sys.exit("dist/index.html is missing: run `npm run build` first")
+    httpd = socketserver.TCPServer(("127.0.0.1", 0), functools.partial(Quiet, directory=str(DIST)))
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
-    url = f"http://127.0.0.1:{httpd.server_address[1]}/index.html"
+    url = f"http://127.0.0.1:{httpd.server_address[1]}/index.html?limite=600"
 
     with sync_playwright() as p:
         browser = p.chromium.launch()
@@ -395,7 +383,7 @@ def main():
         # The page runs the saved program by itself on load; wait for that run
         # rather than start a second one on top of it.
         pg.wait_for_function("() => !document.querySelector('#generer').disabled", timeout=600000)
-        if not pg.evaluate("() => __monde.vol.corps.monde.some(v => v)"):
+        if not pg.evaluate("() => __mwg.rendu.vol.corps.monde.some(v => v)"):
             pg.click("#generer")
             pg.wait_for_function("() => !document.querySelector('#generer').disabled", timeout=600000)
         console = pg.inner_text("#console")
@@ -413,7 +401,7 @@ def main():
             cx, cy, cz = (float(v) for v in args.camera.split(","))
             tx, ty, tz = (float(v) for v in args.target.split(","))
             pg.evaluate("([px,py,pz,tx,ty,tz]) => { const dx=tx-px, dy=ty-py, dz=tz-pz;"
-                        " __monde.vol.placer(px,py,pz, Math.atan2(-dx,-dz), Math.atan2(dy, Math.hypot(dx,dz))); }",
+                        " __mwg.rendu.vol.placer(px,py,pz, Math.atan2(-dx,-dz), Math.atan2(dy, Math.hypot(dx,dz))); }",
                         [cx, cy, cz, tx, ty, tz])
             pg.add_style_tag(content="#aide-vol,#mode,#recentrer,#monde button{visibility:hidden!important}")
             pg.wait_for_timeout(800)
@@ -421,7 +409,6 @@ def main():
             print(f"wrote {args.poster}")
         browser.close()
     httpd.shutdown()
-    shutil.rmtree(tmp, ignore_errors=True)
 
 
 if __name__ == "__main__":
