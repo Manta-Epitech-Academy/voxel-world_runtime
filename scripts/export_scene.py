@@ -25,7 +25,7 @@ The file is standard glTF 2.0, binary, one file, readable by any glTF viewer:
   which the three.js loader the platform uses understands: 12 bytes a vertex.
 
 `--cut x,64` adds a second node named `cut`: the same world with everything at
-x ≥ 64 removed, meshed again so the cut surface shows the layers and the
+x ≥ 64 removed (`--cut x,64,above` removes x < 64 instead), meshed again so the cut surface shows the layers and the
 caves. The platform's viewer swaps to that node when the participant presses
 « Cut away » (convention §3.8b); any other glTF viewer shows both nodes, which
 is what the node name is for.
@@ -174,7 +174,8 @@ MESHER_JS = r"""
   const nodes = { world: mesh(() => true) };
   if (cut) {
     const ax = { x: 0, y: 1, z: 2 }[cut.axis];
-    nodes.cut = mesh((x, y, z) => [x, y, z][ax] < cut.at);
+    nodes.cut = cut.keep === "above" ? mesh((x, y, z) => [x, y, z][ax] >= cut.at)
+                                     : mesh((x, y, z) => [x, y, z][ax] < cut.at);
   }
   return { textures, nodes };
 }
@@ -294,7 +295,8 @@ def main():
     ap.add_argument("program", help="the Lua program to run")
     ap.add_argument("-o", "--output", required=True, help="the .glb to write")
     ap.add_argument("--seed", type=int, default=1, help="the world's seed (graine)")
-    ap.add_argument("--cut", help="also export the cut-away as a node named `cut`: axis,at (x,64)")
+    ap.add_argument("--cut", help="also export the cut-away as a node named `cut`: axis,at[,keep] "
+                                  "(x,64 keeps x < 64; x,64,above keeps x >= 64)")
     ap.add_argument("--poster", help="also render a still of the same world")
     ap.add_argument("--camera", default="-30,72,-30", help="poster camera x,y,z")
     ap.add_argument("--target", default="64,12,64", help="poster look-at x,y,z")
@@ -304,10 +306,12 @@ def main():
 
     cut = None
     if args.cut:
-        axis, at = args.cut.split(",")
-        if axis not in ("x", "y", "z"):
-            sys.exit("--cut wants x,N / y,N / z,N")
-        cut = {"axis": axis, "at": int(at)}
+        parts = args.cut.split(",")
+        axis, at = parts[0], parts[1]
+        keep = parts[2] if len(parts) > 2 else "below"
+        if axis not in ("x", "y", "z") or keep not in ("below", "above"):
+            sys.exit("--cut wants axis,at[,keep]: x,64 or x,64,above")
+        cut = {"axis": axis, "at": int(at), "keep": keep}
 
     code = Path(args.program).read_text(encoding="utf-8")
     tmp = Path(tempfile.mkdtemp())
@@ -315,7 +319,18 @@ def main():
     hook = 'co("recentrer").addEventListener("click",()=>Hy.recentrer());'
     if page.count(hook) != 1:
         sys.exit("the hook anchor is not in index.html: rebuild it with scripts/port.py")
-    (tmp / "index.html").write_text(page.replace(hook, "window.__monde=Hy;" + hook), encoding="utf-8")
+    # Students get five seconds per run, a kindness for an infinite loop. A
+    # headless build on a loaded machine can need more for the full generator,
+    # and a world cut short is the wrong scene (no trees, half the ore), so the
+    # scratch copy allows ten minutes — and any run that is still cut is refused.
+    # Two timers: the Lua hook's limit (seconds), and the page's own watchdog
+    # that kills the worker after nine seconds whatever Lua says.
+    limit, watchdog = "limite:$=5}", "},9*1e3)"
+    if page.count(limit) != 1 or page.count(watchdog) != 1:
+        sys.exit("the time-limit anchors are not in index.html: rebuild it with scripts/port.py")
+    page = (page.replace(hook, "window.__monde=Hy;" + hook)
+                .replace(limit, "limite:$=600}").replace(watchdog, "},600*1e3)"))
+    (tmp / "index.html").write_text(page, encoding="utf-8")
     shutil.copy(ROOT / "embed.js", tmp / "embed.js")
     httpd = socketserver.TCPServer(("127.0.0.1", 0), functools.partial(Quiet, directory=str(tmp)))
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
@@ -330,11 +345,15 @@ def main():
                     " localStorage.setItem('mwg.graine', JSON.stringify(g)); }", [code, args.seed])
         pg.reload()
         pg.wait_for_selector("#generer")
-        pg.click("#generer")
-        pg.wait_for_function("() => !document.querySelector('#generer').disabled", timeout=120000)
+        # The page runs the saved program by itself on load; wait for that run
+        # rather than start a second one on top of it.
+        pg.wait_for_function("() => !document.querySelector('#generer').disabled", timeout=600000)
+        if not pg.evaluate("() => __monde.vol.corps.monde.some(v => v)"):
+            pg.click("#generer")
+            pg.wait_for_function("() => !document.querySelector('#generer').disabled", timeout=600000)
         console = pg.inner_text("#console")
-        if "rreur" in console:
-            sys.exit(f"the program failed:\n{console}")
+        if "rreur" in console or "secondes" in console or "arrêté" in console:
+            sys.exit(f"the program failed or was cut short:\n{console}")
         data = pg.evaluate(MESHER_JS, [cut])
         glb = build_glb(data, Path(args.program).name)
         Path(args.output).write_bytes(glb)
