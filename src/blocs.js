@@ -12,7 +12,7 @@ export const NB_CASES = TAILLE * TAILLE * HAUTEUR;
 /** Les types de bloc. `faces` : la texture du dessus, des côtés, du dessous. */
 export const BLOCS = [
   { id: 0, nom: "AIR", libelle: "Air" },
-  { id: 1, nom: "SOCLE", libelle: "Socle (indestructible)", faces: ["socle", "socle", "socle"] },
+  { id: 1, nom: "BEDROCK", libelle: "Bedrock (indestructible)", faces: ["bedrock", "bedrock", "bedrock"] },
   { id: 2, nom: "PIERRE", libelle: "Pierre", faces: ["pierre", "pierre", "pierre"] },
   { id: 3, nom: "TERRE", libelle: "Terre", faces: ["terre", "terre", "terre"] },
   { id: 4, nom: "HERBE", libelle: "Herbe", faces: ["herbe", "herbe_cote", "terre"] },
@@ -27,6 +27,12 @@ export const BLOCS = [
   { id: 13, nom: "DIAMANT", libelle: "Minerai de diamant", faces: ["diamant", "diamant", "diamant"] },
   { id: 14, nom: "GLACE", libelle: "Glace", faces: ["glace", "glace", "glace"] },
 ];
+
+/**
+ * Les anciens noms, gardés comme alias dans le Lua : le code écrit avant le
+ * renommage (2026-11-05) tourne toujours. Ni documentés, ni proposés.
+ */
+export const ALIAS = { SOCLE: "BEDROCK", GRAINE: "SEED" };
 
 /** `B.PIERRE` vaut 2 : le nom de chaque bloc, comme dans le code Lua. */
 export const B = Object.fromEntries(BLOCS.map((b) => [b.nom, b.id]));

@@ -2,14 +2,14 @@
 // erreurs — et une invite où taper du Lua pour l'essayer, comme dans le
 // runtime Pac-Man. La ligne tapée tourne dans l'état Lua de la dernière
 // génération (src/lua/worker.js) : les fonctions et variables de l'élève
-// sont visibles, et `lire` regarde le monde affiché.
+// sont visibles, et `get_block` regarde le monde affiché.
 //
 // Les exemples des boîtes à outils tiennent sur plusieurs lignes : tant que
 // Lua signale un morceau incomplet, les lignes sont gardées de côté et
 // l'invite passe à « >> ». Une ligne vide, ou Échap, abandonne le morceau.
 
 const INVITE =
-  "Tape du code Lua ici pour l'essayer, par exemple lire(64, 10, 64) ou bloc(64, 20, 64, DIAMANT).";
+  "Tape du code Lua ici pour l'essayer, par exemple get_block(64, 10, 64) ou set_block(64, 20, 64, DIAMANT).";
 const INVITE_SUITE = "Continue ton exemple, ou laisse vide pour annuler.";
 
 const sortie = () => document.getElementById("console");

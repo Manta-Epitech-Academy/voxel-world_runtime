@@ -66,41 +66,41 @@ export default {
     remplies de <strong>trésors</strong>. Dernière ligne droite avant un générateur complet !</p>`,
   outils: [
     {
-      titre: "hasard(a, b)",
-      texte: `<p><code>hasard(1, 6)</code> donne un nombre entier entre 1 et 6, comme un dé. Il dépend
-        de la graine : même graine, mêmes tirages, donc même monde.</p>`,
-      code: "afficher(hasard(1, 6), hasard(1, 6), hasard(0, TAILLE - 1))",
+      titre: "random(a, b)",
+      texte: `<p><code>random(1, 6)</code> donne un nombre entier entre 1 et 6, comme un dé. Il dépend
+        de la seed : même seed, mêmes tirages, donc même monde.</p>`,
+      code: "print(random(1, 6), random(1, 6), random(0, TAILLE - 1))",
     },
     {
-      titre: "lire et while : trouver le sol",
-      texte: `<p><code>lire(x, y, z)</code> dit quel bloc se trouve à un endroit. <code>while</code>
+      titre: "get_block et while : trouver le sol",
+      texte: `<p><code>get_block(x, y, z)</code> dit quel bloc se trouve à un endroit. <code>while</code>
         répète <em>tant que</em> la condition est vraie : on descend depuis le ciel jusqu'au premier bloc.</p>`,
       code: `local x, z = 64, 64
 local y = HAUTEUR - 1
-while y > 0 and lire(x, y, z) == AIR do
+while y > 0 and get_block(x, y, z) == AIR do
   y = y - 1
 end
-afficher("le sol est à y =", y)`,
+print("le sol est à y =", y)`,
     },
     {
       titre: "Une fonction arbre",
       texte: "<p>Un tronc de 5 blocs, puis des feuilles autour du haut. À toi de compléter la couronne.</p>",
       code: `function arbre(x, y, z)
   for i = 0, 4 do
-    bloc(x, y + i, z, BOIS)
+    set_block(x, y + i, z, BOIS)
   end
-  bloc(x, y + 5, z, FEUILLES)
+  set_block(x, y + 5, z, FEUILLES)
 end`,
     },
     {
       titre: "bruit3d : creuser des grottes",
-      texte: `<p>Même idée que <code>bruit</code>, mais en 3D. Là où il dépasse un seuil, on
+      texte: `<p>Même idée que <code>perlin2d</code>, mais en 3D. Là où il dépasse un seuil, on
         <strong>ne pose pas</strong> de pierre : ça fait un trou. Plus le seuil est bas, plus les grottes
         sont grandes.</p>`,
-      code: `if bruit3d(x / 16, y / 10, z / 16) > 0.3 then
+      code: `if perlin3d(x / 16, y / 10, z / 16) > 0.3 then
   -- grotte : on ne pose rien
 else
-  bloc(x, y, z, PIERRE)
+  set_block(x, y, z, PIERRE)
 end`,
     },
     {
@@ -108,13 +108,13 @@ end`,
       texte:
         "<p>Une fonction peut <strong>renvoyer</strong> une valeur. Ici, elle choisit quel bloc poser.</p>",
       code: `function pierre(y)
-  if y < 12 and hasard(1, 200) == 1 then
+  if y < 12 and random(1, 200) == 1 then
     return DIAMANT
   end
   return PIERRE
 end
 
-afficher(pierre(5))`,
+print(pierre(5))`,
     },
   ],
   pieges: [
@@ -123,16 +123,16 @@ afficher(pierre(5))`,
     "Les arbres poussent sur l'herbe : pas dans l'eau, ni sur le sable, ni dans le vide.",
   ],
   objectif: `Trois défis : au moins <strong>${ARBRES_MIN} arbres</strong> plantés sur l'herbe, des <strong>grottes</strong>
-    creusées avec <code>bruit3d</code>, et des <strong>minerais</strong> : du <code>CHARBON</code>, et du
+    creusées avec <code>perlin3d</code>, et des <strong>minerais</strong> : du <code>CHARBON</code>, et du
     <code>DIAMANT</code> seulement tout au fond (y &lt; ${PLAFOND_DIAMANT}).`,
   indices: [
-    "Pour planter un arbre : tire x et z au hasard, cherche le sol avec <code>while</code>, et plante seulement si <code>lire(x, y, z) == HERBE</code>.",
+    "Pour planter un arbre : tire x et z au hasard, cherche le sol avec <code>while</code>, et plante seulement si <code>get_block(x, y, z) == HERBE</code>.",
     "Plante les arbres <strong>après</strong> la double boucle du terrain, sinon il n'y a pas encore de sol.",
     "Pour les grottes, ne creuse pas trop près de la surface : par exemple seulement si <code>y &lt; h - 5</code>.",
     "Pour les minerais, remplace <code>PIERRE</code> par l'appel d'une fonction qui renvoie parfois un minerai.",
   ],
   bonus: `<strong>Défi libre</strong> : invente des biomes. Un deuxième bruit très large peut décider
-    d'une zone de désert (sable, pas d'arbres) ou d'une forêt dense. Puis partage ta graine préférée !`,
+    d'une zone de désert (sable, pas d'arbres) ou d'une forêt dense. Puis partage ta seed préférée !`,
 
   defis: [
     {
@@ -160,9 +160,9 @@ afficher(pierre(5))`,
       },
     },
     {
-      nom: "Des grottes creusées avec bruit3d",
+      nom: "Des grottes creusées avec perlin3d",
       verifier(monde, { appels }) {
-        if (appels.bruit3d === 0) return rate("Tu n'utilises pas encore bruit3d(x, y, z) pour creuser.");
+        if (appels.bruit3d === 0) return rate("Tu n'utilises pas encore perlin3d(x, y, z) pour creuser.");
         const sol = hauteurs(monde, { sansEau: true });
         let cases = 0;
         let vides = 0;
@@ -177,7 +177,7 @@ afficher(pierre(5))`,
         const part = cases ? vides / cases : 0;
         if (part < 0.01) {
           return rate(
-            `Seulement ${(part * 100).toFixed(1)} % du sous-sol est creusé. Baisse ton seuil, ou vérifie que tu ne poses pas la pierre quand bruit3d dépasse ce seuil.`,
+            `Seulement ${(part * 100).toFixed(1)} % du sous-sol est creusé. Baisse ton seuil, ou vérifie que tu ne poses pas la pierre quand perlin3d dépasse ce seuil.`,
           );
         }
         if (part > 0.6)

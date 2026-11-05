@@ -28,8 +28,8 @@ export default {
       titre: "Appeler une fonction",
       texte: `<p>Une <strong>fonction</strong> est une action toute prête. On l'appelle en écrivant son nom,
         puis ses <strong>paramètres</strong> entre parenthèses, séparés par des virgules.</p>
-        <p><code>bloc</code> pose un bloc. Ses quatre paramètres : x, y, z, puis le type de bloc.</p>`,
-      code: "bloc(64, 10, 64, PIERRE)",
+        <p><code>set_block</code> pose un bloc. Ses quatre paramètres : x, y, z, puis le type de bloc.</p>`,
+      code: "set_block(64, 10, 64, PIERRE)",
     },
     {
       titre: "Les coordonnées x, y, z",
@@ -38,8 +38,8 @@ export default {
         monte vers le ciel.</p>
         <p>Le monde va de <code>0</code> à <code>127</code> en x et en z, et de <code>0</code> à
         <code>63</code> en hauteur. Le coin des flèches, c'est (0, 0, 0).</p>`,
-      code: `bloc(0, 0, 0, HERBE)  -- dans le coin, au sol
-bloc(0, 5, 0, HERBE)  -- 5 blocs plus haut`,
+      code: `set_block(0, 0, 0, HERBE)  -- dans le coin, au sol
+set_block(0, 5, 0, HERBE)  -- 5 blocs plus haut`,
     },
     {
       titre: "Voler et marcher dans le monde",
@@ -58,9 +58,9 @@ bloc(0, 5, 0, HERBE)  -- 5 blocs plus haut`,
       texte: `<p>Le type de bloc s'écrit en <strong>MAJUSCULES</strong> :
         <code>PIERRE</code>, <code>TERRE</code>, <code>HERBE</code>, <code>SABLE</code>, <code>EAU</code>,
         <code>BOIS</code>, <code>FEUILLES</code>, <code>NEIGE</code>, <code>GLACE</code>, <code>GRAVIER</code>,
-        <code>CHARBON</code>, <code>FER</code>, <code>DIAMANT</code>, <code>SOCLE</code>, et <code>AIR</code>
+        <code>CHARBON</code>, <code>FER</code>, <code>DIAMANT</code>, <code>BEDROCK</code>, et <code>AIR</code>
         pour effacer.</p>`,
-      code: "bloc(64, 11, 64, DIAMANT)",
+      code: "set_block(64, 11, 64, DIAMANT)",
     },
   ],
   pieges: [
@@ -72,7 +72,7 @@ bloc(0, 5, 0, HERBE)  -- 5 blocs plus haut`,
     "Pose un bloc de <code>PIERRE</code> au centre du monde, à 10 blocs de hauteur : en (64, 10, 64).",
   indices: [
     "Les trois nombres sont toujours dans l'ordre x, y, z. La hauteur est le <strong>deuxième</strong>.",
-    "Une seule ligne suffit : <code>bloc(64, 10, 64, PIERRE)</code>",
+    "Une seule ligne suffit : <code>set_block(64, 10, 64, PIERRE)</code>",
   ],
   bonus: "Construis une petite tour de 5 blocs de haut, puis pose un <code>DIAMANT</code> au sommet.",
 
@@ -95,7 +95,7 @@ bloc(0, 5, 0, HERBE)  -- 5 blocs plus haut`,
             `Il y a un bloc en (${premier.x}, ${premier.y}, ${premier.z}), pas en (64, 10, 64). Vérifie l'ordre x, y, z.`,
           );
         }
-        return rate("Le monde est vide. As-tu écrit un appel à bloc(...) puis cliqué sur ▶ Générer ?");
+        return rate("Le monde est vide. As-tu écrit un appel à set_block(...) puis cliqué sur ▶ Générer ?");
       },
     },
   ],

@@ -149,7 +149,7 @@ class Tampon {
 export function maillerChunk(monde, uvParBloc, cx, cz) {
   const solide = new Tampon();
   const eau = new Tampon();
-  // Sous le monde, un mur : on ne dessine pas le dessous du socle.
+  // Sous le monde, un mur : on ne dessine pas le dessous de la bedrock.
   const bloc = (x, y, z) =>
     y < 0 ? 1 : x < 0 || x >= TAILLE || z < 0 || z >= TAILLE || y >= HAUTEUR ? 0 : monde[index(x, y, z)];
   const opaque = (x, y, z) => SOLIDE[bloc(x, y, z)];

@@ -74,7 +74,7 @@ const nomsDesBlocs = (types) =>
     .join(" ou ");
 
 /**
- * Chaque colonne doit être, de bas en haut : SOCLE à y = 0, des `pierres`,
+ * Chaque colonne doit être, de bas en haut : BEDROCK à y = 0, des `pierres`,
  * trois blocs de `sous`, puis un bloc de `dessus` au sommet. Avec AIR parmi
  * les `pierres`, les grottes sont permises.
  */
@@ -99,7 +99,7 @@ export function verifierCouches(
       }
       const attendu = (y) =>
         y === 0
-          ? [new Set([B.SOCLE]), "SOCLE"]
+          ? [new Set([B.BEDROCK]), "BEDROCK"]
           : y === sommet
             ? [dessus, nomsDesBlocs(dessus)]
             : y >= sommet - 3

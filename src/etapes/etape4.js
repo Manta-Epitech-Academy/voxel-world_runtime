@@ -28,9 +28,9 @@ export default {
         et <code>h</code> sont les <strong>paramètres</strong> : des variables qui reçoivent les valeurs
         données à l'appel.</p>`,
       code: `function colonne(x, z, h)
-  bloc(x, 0, z, SOCLE)
+  set_block(x, 0, z, BEDROCK)
   -- ... les couches, avec h au lieu de SOL
-  bloc(x, h, z, HERBE)
+  set_block(x, h, z, HERBE)
 end
 
 colonne(10, 10, 20)
@@ -43,14 +43,14 @@ colonne(11, 10, 25)`,
         <strong>largeur</strong>.</p>`,
       code: `for x = 0, TAILLE - 1 do
   local h = 20 + math.floor(5 * math.sin(x / 8))
-  bloc(x, h, 0, HERBE)
+  set_block(x, h, 0, HERBE)
 end`,
     },
     {
       titre: "math.floor, arrondir vers le bas",
       texte:
         "<p>Les blocs sont à des hauteurs entières : <code>math.floor(4.7)</code> vaut <code>4</code>.</p>",
-      code: "afficher(math.floor(4.7), math.floor(20 + 3 * math.sin(1)))",
+      code: "print(math.floor(4.7), math.floor(20 + 3 * math.sin(1)))",
     },
     {
       titre: "Deux vagues qui se croisent",

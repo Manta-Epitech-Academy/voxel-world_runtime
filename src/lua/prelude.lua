@@ -1,10 +1,13 @@
 -- Ce que le code de l'élève trouve déjà défini : le monde, les fonctions
--- bloc / lire / bruit / bruit3d / hasard / afficher, et les constantes.
+-- set_block / get_block / perlin2d / perlin3d / random / print, et les constantes.
+-- Les noms français d'avant le 5 novembre 2026 (bloc, lire, bruit, bruit3d,
+-- hasard, afficher) restent des alias, pour le code déjà écrit.
 -- Exécuté dans wasmoon (worker.js) avant le code de l'élève, qui tourne
 -- ensuite dans le même environnement global.
 --
--- Fournis par le worker avant ce fichier : TAILLE, HAUTEUR, GRAINE, les
--- constantes de bloc (AIR = 0, SOCLE = 1, …), __NB_BLOCS, __DECALAGE,
+-- Fournis par le worker avant ce fichier : TAILLE, HAUTEUR, SEED, les
+-- constantes de bloc (AIR = 0, BEDROCK = 1, …) et leurs alias d'avant le
+-- renommage (SOCLE, GRAINE), __NB_BLOCS, __DECALAGE,
 -- __code, __limite, et la fonction __afficher.
 
 local floor, type, error, tostring = math.floor, type, error, tostring
@@ -16,19 +19,19 @@ for i = 0, __NB_BLOCS - 1 do VALIDE[i] = true end
 local M = {}
 for i = 1, TX * TX * TY do M[i] = 0 end
 __hors_monde = 0
--- Compté par bloc : la console sait ainsi qu'une ligne tapée a changé le monde.
+-- Compté par set_block : la console sait ainsi qu'une ligne tapée a changé le monde.
 __modifs = 0
 
-function bloc(x, y, z, b)
+function set_block(x, y, z, b)
   if type(x) ~= "number" or type(y) ~= "number" or type(z) ~= "number" then
-    error("bloc a besoin de trois nombres x, y, z, puis du type de bloc", 2)
+    error("set_block a besoin de trois nombres x, y, z, puis du type de bloc", 2)
   end
   if not VALIDE[b] then
-    if b == nil then error("bloc : il manque le type de bloc, par exemple bloc(x, y, z, PIERRE)", 2) end
+    if b == nil then error("set_block : il manque le type de bloc, par exemple set_block(x, y, z, PIERRE)", 2) end
     if type(b) == "string" then
-      error('bloc : "' .. b .. '" est un texte. Écris le nom du bloc en majuscules, sans guillemets : ' .. b:upper(), 2)
+      error('set_block : "' .. b .. '" est un texte. Écris le nom du bloc en majuscules, sans guillemets : ' .. b:upper(), 2)
     end
-    error("bloc : " .. tostring(b) .. " n'est pas un type de bloc (essaie PIERRE, HERBE, TERRE…)", 2)
+    error("set_block : " .. tostring(b) .. " n'est pas un type de bloc (essaie PIERRE, HERBE, TERRE…)", 2)
   end
   x, y, z = floor(x), floor(y), floor(z)
   if x < 0 or x >= TX or z < 0 or z >= TX or y < 0 or y >= TY then
@@ -39,18 +42,18 @@ function bloc(x, y, z, b)
   __modifs = __modifs + 1
 end
 
-function lire(x, y, z)
+function get_block(x, y, z)
   if type(x) ~= "number" or type(y) ~= "number" or type(z) ~= "number" then
-    error("lire a besoin de trois nombres x, y, z", 2)
+    error("get_block a besoin de trois nombres x, y, z", 2)
   end
   x, y, z = floor(x), floor(y), floor(z)
   if x < 0 or x >= TX or z < 0 or z >= TX or y < 0 or y >= TY then return AIR end
   return M[x + TX * (z + TX * y) + 1]
 end
 
--- Bruit de Perlin (Ken Perlin, version améliorée de 2002), permutation tirée de GRAINE.
+-- Bruit de Perlin (Ken Perlin, version améliorée de 2002), permutation tirée de SEED.
 local p = {}
-math.randomseed(GRAINE)
+math.randomseed(SEED)
 for i = 0, 255 do p[i] = i end
 for i = 255, 1, -1 do
   local j = math.random(0, i)
@@ -77,12 +80,12 @@ local function grad3(h, x, y, z)
   return ((h % 2 == 0) and u or -u) + ((h % 4 < 2) and v or -v)
 end
 
--- Compteurs lus par les vérifications : bruit est-il utilisé, et avec des entiers ?
+-- Compteurs lus par les vérifications : perlin2d est-il utilisé, et avec des entiers ?
 local n_bruit, n_bruit_entier, n_bruit3d = 0, 0, 0
 
-function bruit(x, z)
+function perlin2d(x, z)
   if type(x) ~= "number" or type(z) ~= "number" then
-    error("bruit a besoin de deux nombres : bruit(x, z)", 2)
+    error("perlin2d a besoin de deux nombres : perlin2d(x, z)", 2)
   end
   n_bruit = n_bruit + 1
   if x == floor(x) and z == floor(z) then n_bruit_entier = n_bruit_entier + 1 end
@@ -98,9 +101,9 @@ function bruit(x, z)
   return nx0 + v * (nx1 - nx0)
 end
 
-function bruit3d(x, y, z)
+function perlin3d(x, y, z)
   if type(x) ~= "number" or type(y) ~= "number" or type(z) ~= "number" then
-    error("bruit3d a besoin de trois nombres : bruit3d(x, y, z)", 2)
+    error("perlin3d a besoin de trois nombres : perlin3d(x, y, z)", 2)
   end
   n_bruit3d = n_bruit3d + 1
   local fx, fy, fz = floor(x), floor(y), floor(z)
@@ -117,19 +120,21 @@ function bruit3d(x, y, z)
          l(u, grad3(p[AB + 1], x, y - 1, z - 1), grad3(p[BB + 1], x - 1, y - 1, z - 1))))
 end
 
-function hasard(a, b)
+function random(a, b)
   if a == nil then return math.random() end
   if b == nil then return math.random(1, floor(a)) end
   return math.random(floor(a), floor(b))
 end
 
-function afficher(...)
+function print(...)
   local n = select("#", ...)
   local morceaux = {}
   for i = 1, n do morceaux[i] = tostring((select(i, ...))) end
   __afficher(table.concat(morceaux, "  "))
 end
-print = afficher
+
+-- Les noms d'avant : des alias, ni documentés ni proposés par l'éditeur.
+bloc, lire, bruit, bruit3d, hasard, afficher = set_block, get_block, perlin2d, perlin3d, random, print
 
 -- Compile et exécute le code de l'élève. Renvoie "ok", "syntaxe" ou
 -- "execution", le message, et la trace. Un code qui tourne plus de __limite
@@ -137,7 +142,7 @@ print = afficher
 function __lancer()
   local fn, err = load(__code, "=code", "t", _ENV)
   if not fn then return "syntaxe", err, "" end
-  math.randomseed(GRAINE)
+  math.randomseed(SEED)
   local debut = os.clock()
   debug.sethook(function()
     if os.clock() - debut > __limite then error("__TEMPS_DEPASSE__", 2) end

@@ -78,7 +78,7 @@ MESHER_JS = r"""
   const GRASS = [96, 160, 64], DIRT = [134, 96, 67], STONE = [125, 125, 125];
   const ore = (col) => (c, r) => { noise(c, r, STONE); specks(c, r, col, 6, 2); };
   const T = {
-    socle: (c, r) => noise(c, r, [60, 60, 60], 0.35),
+    bedrock: (c, r) => noise(c, r, [60, 60, 60], 0.35),
     pierre: (c, r) => { noise(c, r, STONE); specks(c, r, [105, 105, 105], 8, 2); },
     terre: (c, r) => { noise(c, r, DIRT, 0.15); specks(c, r, [110, 78, 54], 6, 1); },
     herbe: (c, r) => noise(c, r, GRASS, 0.18),
@@ -105,7 +105,7 @@ MESHER_JS = r"""
   names.forEach((name, i) => { const c = document.createElement("canvas"); c.width = c.height = 16;
     T[name](c.getContext("2d"), rng(i * 7919 + 17)); textures[name] = c.toDataURL("image/png"); });
   // block id -> [top, side, bottom]
-  const FACES = { 1: ["socle","socle","socle"], 2: ["pierre","pierre","pierre"], 3: ["terre","terre","terre"],
+  const FACES = { 1: ["bedrock","bedrock","bedrock"], 2: ["pierre","pierre","pierre"], 3: ["terre","terre","terre"],
     4: ["herbe","herbe_cote","terre"], 5: ["sable","sable","sable"], 6: ["eau","eau","eau"],
     7: ["bois_dessus","bois","bois_dessus"], 8: ["feuilles","feuilles","feuilles"], 9: ["neige","neige_cote","terre"],
     10: ["gravier","gravier","gravier"], 11: ["charbon","charbon","charbon"], 12: ["fer","fer","fer"],
@@ -338,7 +338,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("program", help="the Lua program to run")
     ap.add_argument("-o", "--output", required=True, help="the .glb to write")
-    ap.add_argument("--seed", type=int, default=1, help="the world's seed (graine)")
+    ap.add_argument("--seed", type=int, default=1, help="the world's seed (SEED in the program)")
     ap.add_argument("--cut", help="make the scene cuttable along an axis, with its caps: "
                                   "axis[,above|below][,stride] (x — keep above, a cap every 4 blocks)")
     ap.add_argument("--poster", help="also render a still of the same world")

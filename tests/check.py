@@ -149,10 +149,12 @@ def main():
             pg.wait_for_function("() => !document.querySelector('#console-entree').disabled")
             pg.wait_for_timeout(300)
             return pg.inner_text("#console").strip().split("\n")[-1], pg.inner_text("#console-invite")
-        got = [repl(l) for l in ("1 + 1", "lire(64, 0, 64) == SOCLE", "if true then", "afficher(7) end",
-                                  "bloc(64, 60, 64, DIAMANT)", "lire(64, 60, 64)")]
+        got = [repl(l) for l in ("1 + 1", "get_block(64, 0, 64) == BEDROCK", "if true then", "print(7) end",
+                                  "set_block(64, 60, 64, DIAMANT)", "get_block(64, 60, 64)",
+                                  "SOCLE == BEDROCK and GRAINE == SEED and bloc == set_block and lire == get_block",
+                                  "bruit == perlin2d and bruit3d == perlin3d and hasard == random and afficher == print")]
         print("console prompt:", got)
-        want = [("2", ">"), ("true", ">"), ("> if true then", ">>"), ("7", ">"), ("> bloc(64, 60, 64, DIAMANT)", ">"), ("13", ">")]
+        want = [("2", ">"), ("true", ">"), ("> if true then", ">>"), ("7", ">"), ("> set_block(64, 60, 64, DIAMANT)", ">"), ("13", ">"), ("true", ">"), ("true", ">")]
         if got != want:
             failures.append(f"console prompt: got {got}, wanted {want}")
         # Platform mode hides the app's own copy of the workshop text.

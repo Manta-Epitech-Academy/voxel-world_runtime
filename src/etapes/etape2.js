@@ -28,7 +28,7 @@ export default {
       texte: `<p>Une <strong>boucle</strong> répète le code écrit entre <code>do</code> et <code>end</code>.
         Ici, <code>x</code> vaut 0, puis 1, puis 2… jusqu'à 9 : une ligne de 10 blocs.</p>`,
       code: `for x = 0, 9 do
-  bloc(x, 0, 0, PIERRE)
+  set_block(x, 0, 0, PIERRE)
 end`,
     },
     {
@@ -37,7 +37,7 @@ end`,
         10 × 10 = un carré de 100 blocs.</p>`,
       code: `for x = 0, 9 do
   for z = 0, 9 do
-    bloc(x, 0, z, PIERRE)
+    set_block(x, 0, z, PIERRE)
   end
 end`,
     },
@@ -45,15 +45,15 @@ end`,
       titre: "TAILLE",
       texte: `<p><code>TAILLE</code> vaut 128, la largeur du monde. Les colonnes vont de <code>0</code>
         à <code>TAILLE - 1</code>, c'est-à-dire 127.</p>`,
-      code: `afficher(TAILLE)
-afficher(TAILLE - 1)`,
+      code: `print(TAILLE)
+print(TAILLE - 1)`,
     },
     {
-      titre: "afficher",
-      texte: `<p><code>afficher</code> écrit dans la console, sous l'éditeur. C'est ta loupe : quand ton
+      titre: "print",
+      texte: `<p><code>print</code> écrit dans la console, sous l'éditeur. C'est ta loupe : quand ton
         code ne fait pas ce que tu crois, affiche tes variables.</p>`,
       code: `for x = 0, 3 do
-  afficher("x vaut", x)
+  print("x vaut", x)
 end`,
     },
   ],

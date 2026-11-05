@@ -11,7 +11,7 @@
 import { LuaFactory } from "wasmoon";
 import wasmUrl from "wasmoon/dist/glue.wasm?url";
 import PRELUDE from "./prelude.lua?raw";
-import { BLOCS, TAILLE, HAUTEUR, NB_CASES } from "../blocs.js";
+import { ALIAS, BLOCS, TAILLE, HAUTEUR, NB_CASES } from "../blocs.js";
 
 /** Au-delà, la console n'affiche plus les messages, elle dit qu'elle en a coupé. */
 const MAX_SORTIES = 300;
@@ -21,6 +21,7 @@ const DECALAGE = 33;
 const ENTETE = [
   `TAILLE, HAUTEUR = ${TAILLE}, ${HAUTEUR}`,
   ...BLOCS.map((b) => `${b.nom} = ${b.id}`),
+  ...Object.entries(ALIAS).map(([ancien, nouveau]) => `${ancien} = ${nouveau}`),
   `__NB_BLOCS = ${BLOCS.length}`,
   `__DECALAGE = ${DECALAGE}`,
   "",
@@ -46,7 +47,7 @@ async function preparer(code, graine, limite) {
   moteur = null;
   const lua = await laFabrique().createEngine({ enableProxy: false, injectObjects: false });
   const etat = { lua, sorties: [], tronque: false };
-  lua.global.set("GRAINE", graine);
+  lua.global.set("SEED", graine);
   lua.global.set("__code", code);
   lua.global.set("__limite", limite);
   lua.global.set("__afficher", (texte) => {

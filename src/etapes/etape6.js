@@ -29,11 +29,11 @@ export default {
         teste une autre condition, <code>else</code> s'occupe de tous les autres cas.</p>`,
       code: `local h = 30
 if h < 20 then
-  afficher("bas")
+  print("bas")
 elseif h > 35 then
-  afficher("haut")
+  print("haut")
 else
-  afficher("au milieu")
+  print("au milieu")
 end`,
     },
     {
@@ -43,7 +43,7 @@ end`,
 if h >= 34 then
   dessus = NEIGE
 end
-bloc(x, h, z, dessus)`,
+set_block(x, h, z, dessus)`,
     },
     {
       titre: "Remplir d'eau",
@@ -51,7 +51,7 @@ bloc(x, h, z, dessus)`,
         mer, la boucle ne fait <strong>aucun tour</strong> : pas d'eau. Pratique !</p>`,
       code: `NIVEAU_MER = 22
 for y = h + 1, NIVEAU_MER do
-  bloc(x, y, z, EAU)
+  set_block(x, y, z, EAU)
 end`,
     },
     {

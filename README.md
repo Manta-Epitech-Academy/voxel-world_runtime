@@ -29,6 +29,11 @@ module, avec le même comportement et les mêmes textes. Trois différences voul
   dernière génération : les fonctions de l'élève sont visibles, `lire` regarde le monde affiché,
   et un `bloc(...)` tapé là pose le bloc dans la vue. Une expression seule affiche sa valeur ;
   un morceau sur plusieurs lignes (un `if` sans son `end`) fait passer l'invite à `>>`.
+- **Les fonctions en anglais simple** : `set_block`, `get_block`, `perlin2d`, `perlin3d`, `random`,
+  `print`, et les mots de Minecraft `BEDROCK` et `SEED` (renommés le 5 novembre 2026 ; les
+  autres constantes restent en français). Les anciens noms (`bloc`, `lire`, `bruit`, `bruit3d`,
+  `hasard`, `afficher`, `SOCLE`, `GRAINE`) restent des alias dans le Lua, sans être documentés :
+  le code écrit avant tourne toujours.
 - **Pas de corrigés.** Le bouton « Corrigé précédent » et les sept solutions ne sont pas dans
   les sources : un élève n'a jamais le code d'une étape qu'il doit écrire.
 
@@ -37,7 +42,7 @@ module, avec le même comportement et les mêmes textes. Trois différences voul
 | `index.html` | la page : la barre du haut et le contenu de chaque panneau |
 | `src/main.js` | le point d'entrée : relie l'éditeur, l'exécution, la vue 3D, les consignes, la progression |
 | `src/blocs.js` | les types de bloc, la taille du monde, `index(x, y, z)` |
-| `src/lua/prelude.lua` | ce que le code de l'élève trouve défini : `bloc`, `lire`, `bruit`, `bruit3d`, `hasard`, `afficher` |
+| `src/lua/prelude.lua` | ce que le code de l'élève trouve défini : `set_block`, `get_block`, `perlin2d`, `perlin3d`, `random`, `print` |
 | `src/lua/worker.js` | le worker qui exécute le Lua (wasmoon), coupé de la page ; garde l'état pour l'invite |
 | `src/executeur.js` | côté page : lance le worker, le relance après une boucle infinie |
 | `src/erreurs.js` | les erreurs de Lua traduites pour un débutant |

@@ -82,7 +82,7 @@ export class Editeur {
       fixedOverflowWidgets: true,
       folding: true,
 
-      // Fermeture des paires : « bloc(64 » devenait « bloc(64) », puis une
+      // Fermeture des paires : « set_block(64 » devenait « set_block(64) », puis une
       // parenthèse de trop dès que l'élève tapait la sienne.
       autoClosingBrackets: "never",
       autoClosingQuotes: "never",

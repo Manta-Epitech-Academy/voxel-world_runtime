@@ -60,7 +60,7 @@ function minerai(couleur) {
 
 /** Un dessinateur par nom de texture (voir `faces` dans blocs.js). */
 export const DESSINS = {
-  socle(ctx, rnd) {
+  bedrock(ctx, rnd) {
     aplat(ctx, rnd, [60, 60, 60], 0.35);
   },
   pierre(ctx, rnd) {
