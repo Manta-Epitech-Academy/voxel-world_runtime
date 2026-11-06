@@ -234,10 +234,6 @@ $("mode").addEventListener("click", (ev) => {
   rendu.vol.basculer();
   ev.currentTarget.blur();
 });
-$("disposition").addEventListener("click", (ev) => {
-  disposition.reinitialiser();
-  ev.currentTarget.blur();
-});
 
 initConsole({ onLigne: evaluerLigne });
 

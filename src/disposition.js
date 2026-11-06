@@ -75,7 +75,7 @@ function boutonAgrandir(groupe) {
 
 /**
  * Monte dockview dans `hote` et renvoie son API, augmentée de
- * `montrer(id)` (mettre un panneau devant) et `reinitialiser()`.
+ * `montrer(id)` (mettre un panneau devant).
  */
 export function monterDisposition(hote) {
   const api = createDockview(hote, {
@@ -95,7 +95,6 @@ export function monterDisposition(hote) {
   // Comme l'application d'origine : le monde au-dessus des consignes à
   // gauche, le code à droite sur toute la hauteur, la console sous le code.
   function dispositionParDefaut() {
-    api.clear();
     const { clientWidth: largeur, clientHeight: hauteur } = hote;
     ouvrir("monde");
     ouvrir(
@@ -142,9 +141,5 @@ export function monterDisposition(hote) {
   });
 
   api.montrer = (id) => api.getPanel(id)?.api.setActive();
-  api.reinitialiser = () => {
-    if (api.hasMaximizedGroup()) api.exitMaximizedGroup();
-    dispositionParDefaut();
-  };
   return api;
 }

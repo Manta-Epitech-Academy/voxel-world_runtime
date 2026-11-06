@@ -19,7 +19,7 @@ module, avec le même comportement et les mêmes textes. Trois différences voul
 - **Les panneaux sont posés par [dockview](https://dockview.dev)**, comme dans l'éditeur TIC-80 de
   l'organisation : on les redimensionne, on les déplace par leur onglet, on agrandit un groupe
   à toute la page (⛶), et la disposition est gardée dans le navigateur. La console est un
-  panneau à part, sous le code. « ⊞ Disposition » remet tout en place.
+  panneau à part, sous le code.
 - **L'éditeur Monaco est réglé pour un débutant**, comme dans le runtime Pac-Man : rien
   n'apparaît que l'élève n'ait tapé. Pas de parenthèse fermée toute seule, pas de liste de
   suggestions pendant la frappe (elle reste disponible par Ctrl + Espace), pas de reformatage.
