@@ -9,9 +9,9 @@ It is read for its solutions only, which this test needs twice: to prove none
 of them is in the build, and to drive each step to green. Needs Playwright
 with Chromium.
 
-For every step N it loads N's official solution into the editor, clicks
-« Générer », and checks that the token box shows exactly what the platform
-computes for that step: monde{HMAC-SHA256(secret, "voxel-world:N")[:12]}.
+For every step N it loads N's official solution into the editor and checks
+that it builds a world. Automatic validation is off (src/main.js), so no
+token is expected; the platform hooks must still be callable.
 """
 import functools, hashlib, hmac, http.server, socketserver, sys, threading, zipfile
 from pathlib import Path
@@ -118,30 +118,22 @@ def main():
     with sync_playwright() as p:
         browser = p.chromium.launch()
         pg = browser.new_page(viewport={"width": 1280, "height": 800})
-        tokens = []
-        pg.expose_function("__record", lambda d: tokens.append(d))
+        # Automatic validation is off (main.js VERIFICATION_AUTO): no panel, no
+        # token. Each official solution must still run to a world.
         for n in range(1, 8):
             pg.goto(url)
             pg.evaluate("([e,c])=>{localStorage.clear();localStorage.setItem('mwg.etape',JSON.stringify(e));"
                         "localStorage.setItem('mwg.code',JSON.stringify(c))}", [n - 1, sols[n]])
             pg.reload()
             pg.wait_for_selector("#generer")
-            if pg.query_selector("#corrige"):
-                failures.append("the « Corrigé précédent » button is still there")
-            pg.evaluate("s=>{VoxelWorld.setSecret(s);VoxelWorld.enable();"
-                        "addEventListener('wg:jeton',e=>__record(e.detail))}", SECRET)
-            pg.click("#generer")
-            try:
-                pg.wait_for_selector("#wg-jeton:not([hidden]) .wg-code", timeout=60000)
-            except Exception:
-                defis = pg.inner_text("#defis")
-                failures.append(f"step {n}: no token shown. Checks: {defis!r}")
-                continue
-            shown = pg.inner_text("#wg-jeton .wg-code")
-            ok = shown == expected(n)
-            print(f"step {n}: {'ok  ' if ok else 'FAIL'} {shown}")
+            pg.wait_for_function("() => !document.querySelector('#generer').disabled", timeout=60000)
+            statut = pg.inner_text("#statut")
+            ok = "blocs" in statut and not pg.query_selector("#panneau-verification")
+            print(f"step {n}: {'ok  ' if ok else 'FAIL'} {statut}")
             if not ok:
-                failures.append(f"step {n}: shows {shown}, platform expects {expected(n)}")
+                failures.append(f"step {n}: solution did not build a world, or the verification pane is back")
+        if pg.evaluate(r"() => [...document.querySelectorAll('button')].some(b => /[\u{1F300}-\u{1FAFF}\u2600-\u27BF]/u.test(b.textContent))"):
+            failures.append("a button still carries an emoji")
         # The console prompt: the step's own functions, the world, an expression's value.
         def repl(line):
             pg.fill("#console-entree", line)
@@ -157,44 +149,10 @@ def main():
         want = [("2", ">"), ("true", ">"), ("> if true then", ">>"), ("7", ">"), ("> set_block(64, 60, 64, DIAMANT)", ">"), ("13", ">"), ("true", ">"), ("true", ">")]
         if got != want:
             failures.append(f"console prompt: got {got}, wanted {want}")
-        # Platform mode with a host: the host picks the step, so the arrows go.
-        nav = pg.evaluate("()=>[...document.querySelectorAll('.etape-nav')]"
-                          ".filter(e=>getComputedStyle(e).display!=='none').length")
-        print("step arrows visible with a host:", nav)
-        if nav:
-            failures.append("platform mode with a host still shows the step arrows")
-        # A platform step with no check in the app: one neutral note, nothing else.
-        pg.evaluate("VoxelWorld.etapeSansDefi(true)")
-        pg.wait_for_timeout(200)
-        note = pg.is_visible("#wg-sans-defi")
-        others = pg.evaluate("()=>[...document.querySelectorAll('#verification > *')]"
-                             ".filter(e=>e.id!=='wg-sans-defi'&&getComputedStyle(e).display!=='none').length")
-        print("no-check step: note", note, "| other visible blocks", others)
-        if not note or others:
-            failures.append("etapeSansDefi(true) does not show the note alone")
-        pg.evaluate("VoxelWorld.etapeSansDefi(false)")
-        pg.wait_for_timeout(200)
-        if pg.query_selector("#wg-sans-defi"):
-            failures.append("etapeSansDefi(false) leaves the note")
-        # Step API used by the adapter.
-        pg.evaluate("WorldGenerator.allerA(2)")
+        # Platform hooks stay callable for the adapter.
+        pg.evaluate("s=>{VoxelWorld.setSecret(s);VoxelWorld.enable();VoxelWorld.etapeSansDefi(true);WorldGenerator.allerA(2)}", SECRET)
         if pg.evaluate("WorldGenerator.etape()") != 2:
             failures.append("WorldGenerator.allerA does not change the step")
-        # `?plateforme=1`: no host, so the participant changes step with the arrows.
-        pg.goto(url + "?plateforme=1")
-        pg.wait_for_selector("#generer")
-        pg.wait_for_timeout(500)
-        nav = pg.evaluate("()=>[...document.querySelectorAll('.etape-nav')]"
-                          ".filter(e=>getComputedStyle(e).display!=='none').length")
-        print("step arrows visible with ?plateforme=1:", nav)
-        if nav != 2:
-            failures.append(f"?plateforme=1 should keep the two step arrows, got {nav}")
-        before = pg.evaluate("WorldGenerator.etape()")
-        pg.click("#etape-suiv")
-        if pg.evaluate("WorldGenerator.etape()") != before + 1:
-            failures.append("the › arrow does not go to the next step")
-        if len(tokens) < 7:
-            failures.append(f"wg:jeton fired {len(tokens)} times, expected 7")
         failures.extend(flight(browser, url))
         browser.close()
     httpd.shutdown()

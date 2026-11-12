@@ -7,26 +7,19 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='6' fill='%235fb946'/%3E%3Crect y='6' width='16' height='10' fill='%238b6a47'/%3E%3C/svg%3E">
 </head>
 <body>
-  <header class="barre">
-    <div class="logo"><span class="cube" aria-hidden="true"></span> World Generator</div>
-  </header>
-
   <main id="espaces" class="espaces"></main>
 
   <!-- Le contenu des panneaux. dockview (src/disposition.js) prend chacun de
-       ces éléments et le place dans son panneau. -->
+       ces éléments et le place dans son panneau. Les icônes des boutons sont
+       posées par src/icones.js au démarrage. -->
   <div id="contenus" hidden>
-    <section id="panneau-verification" class="panneau verification" aria-label="Vérification des défis" hidden>
-      <div id="verification" class="verification-contenu"></div>
-    </section>
-
     <section id="panneau-code" class="panneau code" aria-label="Éditeur de code" hidden>
       <div class="outils">
-        <button id="generer" class="bouton principal" title="Ctrl + Entrée">▶ Générer</button>
+        <button id="generer" class="bouton principal" title="Ctrl + Entrée">Générer</button>
         <label class="graine">Seed
           <input id="graine" type="number" min="0" max="999999" step="1" value="1">
         </label>
-        <button id="de" class="bouton" title="Seed au hasard">🎲</button>
+        <button id="de" class="bouton" title="Seed au hasard" aria-label="Seed au hasard"></button>
         <span class="espaceur"></span>
         <span id="statut" class="statut"></span>
       </div>
@@ -46,8 +39,8 @@
     <section id="panneau-monde" class="panneau" aria-label="Monde 3D" hidden>
       <div id="monde" class="monde">
         <div class="monde-boutons">
-          <button id="mode" class="bouton" title="Passer du vol à la marche (F, ou deux fois Espace)">🚶 Marcher</button>
-          <button id="recentrer" class="bouton" title="Revenir à la vue de départ">⌖ Recentrer</button>
+          <button id="mode" class="bouton" title="Passer du vol à la marche (F, ou deux fois Espace)">Marcher</button>
+          <button id="recentrer" class="bouton" title="Revenir à la vue de départ">Recentrer</button>
         </div>
         <div id="aide-vol" class="aide-vol">
           <strong id="aide-titre">Clique pour voler</strong>

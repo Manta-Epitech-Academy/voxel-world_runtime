@@ -11,14 +11,15 @@ import { stockage } from "./stockage.js";
 
 const CLE = "disposition";
 /** À changer quand les panneaux changent : une disposition d'une autre version est ignorée. */
-const VERSION = 2;
+const VERSION = 3;
 
 export const PANNEAUX = {
   monde: "Monde 3D",
-  verification: "Vérification",
   code: "Code",
   console: "Console",
 };
+/** Le panneau de la vérification automatique, quand elle est active (main.js). */
+const PANNEAU_VERIFICATION = { verification: "Vérification" };
 
 const ICONE_AGRANDIR = "M1 6V1h5M10 1h5v5M15 10v5h-5M6 15H1v-5";
 const ICONE_REDUIRE = "M6 1v5H1M15 6h-5V1M10 15v-5h5M1 10h5v5";
@@ -77,7 +78,8 @@ function boutonAgrandir(groupe) {
  * Monte dockview dans `hote` et renvoie son API, augmentée de
  * `montrer(id)` (mettre un panneau devant).
  */
-export function monterDisposition(hote) {
+export function monterDisposition(hote, { verification = false } = {}) {
+  const panneaux = verification ? { ...PANNEAUX, ...PANNEAU_VERIFICATION } : PANNEAUX;
   const api = createDockview(hote, {
     theme: themeDark,
     createComponent: ({ name }) => contenu(name),
@@ -89,11 +91,11 @@ export function monterDisposition(hote) {
   });
 
   function ouvrir(id, position, taille = {}) {
-    return api.addPanel({ id, component: id, title: PANNEAUX[id], position, ...taille });
+    return api.addPanel({ id, component: id, title: panneaux[id], position, ...taille });
   }
 
-  // Le monde au-dessus de la vérification à
-  // gauche, le code à droite sur toute la hauteur, la console sous le code.
+  // Le monde à gauche, le code à droite sur toute la hauteur, la console
+  // sous le code ; et la vérification sous le monde, quand elle est active.
   function dispositionParDefaut() {
     const { clientWidth: largeur, clientHeight: hauteur } = hote;
     ouvrir("monde");
@@ -102,11 +104,13 @@ export function monterDisposition(hote) {
       { referencePanel: "monde", direction: "right" },
       { initialWidth: Math.round(largeur * 0.45) },
     );
-    ouvrir(
-      "verification",
-      { referencePanel: "monde", direction: "below" },
-      { initialHeight: Math.round(hauteur * 0.2) },
-    );
+    if (verification) {
+      ouvrir(
+        "verification",
+        { referencePanel: "monde", direction: "below" },
+        { initialHeight: Math.round(hauteur * 0.2) },
+      );
+    }
     ouvrir(
       "console",
       { referencePanel: "code", direction: "below" },
@@ -129,7 +133,7 @@ export function monterDisposition(hote) {
 
   // Un panneau manquant (disposition ancienne, ou fermé par un menu) est rouvert.
   const completer = () => {
-    for (const id of Object.keys(PANNEAUX)) if (!api.getPanel(id)) ouvrir(id, { direction: "right" });
+    for (const id of Object.keys(panneaux)) if (!api.getPanel(id)) ouvrir(id, { direction: "right" });
   };
   completer();
   api.onDidRemovePanel(() => queueMicrotask(completer));

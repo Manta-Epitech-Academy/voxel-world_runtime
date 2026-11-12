@@ -5,9 +5,8 @@ une seule page. Le code de l'élève est du **Lua**, exécuté dans le navigateu
 
 **Ce dépôt ne contient pas le sujet de l'atelier**, il vit dans
 [voxel-world_subject](https://github.com/Manta-Epitech-Academy/voxel-world_subject) et la
-plateforme l'affiche à côté de ce runtime. La page ne montre, de chaque étape, que son titre et
-la liste de ses défis, dans le panneau « Vérification » ; deux flèches changent d'étape quand
-aucun hôte ne le fait à la place du participant.
+plateforme l'affiche à côté de ce runtime. La page, c'est le monde, l'éditeur et la console :
+le texte des étapes et leur validation sont l'affaire de la plateforme.
 
 Essayer : <https://manta-epitech-academy.github.io/voxel-world_runtime/>
 
@@ -19,8 +18,8 @@ module, avec le même comportement et les mêmes textes. Trois différences voul
 
 - **Les panneaux sont posés par [dockview](https://dockview.dev)**, comme dans l'éditeur TIC-80 de
   l'organisation : on les redimensionne, on les déplace par leur onglet, on agrandit un groupe
-  à toute la page (⛶), et la disposition est gardée dans le navigateur. La console est un
-  panneau à part, sous le code ; la vérification, sous le monde.
+  à toute la page, et la disposition est gardée dans le navigateur. La console est un panneau
+  à part, sous le code. Les icônes des boutons viennent de Font Awesome (`src/icones.js`).
 - **L'éditeur Monaco est réglé pour un débutant**, comme dans le runtime Pac-Man : rien
   n'apparaît que l'élève n'ait tapé. Pas de parenthèse fermée toute seule, pas de liste de
   suggestions pendant la frappe (elle reste disponible par Ctrl + Espace), pas de reformatage.
@@ -81,18 +80,12 @@ solutions n'est dans le build.
 
 ## Validation des étapes
 
-Chaque étape a une liste de défis que l'application vérifie au clic sur « ▶ Générer ». Quand
-tous sont au vert, et que la plateforme a fourni son secret, `src/plateforme.js` affiche un
-code de validation :
-
-```
-monde{ 12 premiers caractères hexadécimaux de HMAC-SHA256(secret, "voxel-world:<n° d'étape>") }
-```
-
-La plateforme calcule la même valeur et en fait le flag de l'étape. Le secret est propre à
-chaque instance, donc un code ne sert pas d'une session à l'autre. Le code Lua de l'élève ne
-peut pas lire ce secret : wasmoon tourne dans un worker sans accès au JavaScript de la page
-(`injectObjects` et `enableProxy` désactivés).
+La vérification automatique est **désactivée** (`VERIFICATION_AUTO` dans `src/main.js`) : les
+étapes sont validées par l'animateur, avec un code, et la page ne montre ni panneau de
+vérification ni code de validation. Les défis restent dans `src/etapes/` et
+`src/verifications.js`, et `src/plateforme.js` sait encore calculer un code
+(`monde{HMAC-SHA256(secret, "voxel-world:<n>")[:12]}`) : remettre la constante à `true` ranime
+le tout.
 
 ## Intégration dans la plateforme
 

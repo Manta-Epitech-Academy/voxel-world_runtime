@@ -4,17 +4,26 @@ import "./style.css";
 import "./plateforme.js";
 import { NB_CASES } from "./blocs.js";
 import { ETAPES, verifierEtape } from "./etapes/index.js";
+import { garnir } from "./icones.js";
 import { Editeur } from "./editeur.js";
 import { executer, evaluer, LIMITE_SECONDES } from "./executeur.js";
 import { expliquerErreur } from "./erreurs.js";
 import { Monde3D } from "./monde3d.js";
 import { afficherConsole, ajouterConsole, initConsole } from "./console.js";
 import { afficherVerification, afficherDefis } from "./verification.js";
+
+/**
+ * La vérification automatique des défis : désactivée (2026-11-12). Les
+ * étapes sont validées par l'animateur, avec un code ; la page ne montre
+ * plus de panneau « Vérification » et n'annonce plus de résultat. Les défis
+ * restent dans etapes/ et verifications.js : remettre `true` les ranime.
+ */
+export const VERIFICATION_AUTO = false;
 import { monterDisposition } from "./disposition.js";
 import { stockage } from "./stockage.js";
 
 const CODE_DE_DEPART = `-- Bienvenue, architecte !
--- Écris ton code ici, puis clique sur ▶ Générer (ou Ctrl + Entrée).
+-- Écris ton code ici, puis clique sur Générer (ou Ctrl + Entrée).
 
 `;
 
@@ -37,16 +46,17 @@ const etapeReussie = (i) => {
 
 // ---- les panneaux ---------------------------------------------------------
 
-const disposition = monterDisposition($("espaces"));
+const disposition = monterDisposition($("espaces"), { verification: VERIFICATION_AUTO });
 
 const rendu = new Monde3D($("monde"));
 rendu.vol.onChangement = (actif) => {
-  $("aide-vol").hidden = actif;
+  // L'aide reste lisible pendant le vol, en transparence, pour qui cherche une touche.
+  $("aide-vol").classList.toggle("capture", actif);
   $("viseur").hidden = !actif;
 };
 rendu.vol.onMode = (mode) => {
   const marche = mode === "marche";
-  $("mode").textContent = marche ? "✈️ Voler" : "🚶 Marcher";
+  garnir($("mode"), marche ? "voler" : "marcher", marche ? "Voler" : "Marcher");
   $("aide-titre").textContent = marche ? "Clique pour marcher" : "Clique pour voler";
   $("aide-vertical").innerHTML = marche
     ? "<kbd>Espace</kbd> sauter (et nager vers le haut)"
@@ -69,7 +79,7 @@ async function generer() {
   etat.enCours = true;
   const bouton = $("generer");
   bouton.disabled = true;
-  bouton.textContent = "⏳ Génération…";
+  garnir(bouton, "attente", "Génération…");
   $("statut").textContent = "";
   editeur.effacerErreurs();
 
@@ -84,7 +94,7 @@ async function generer() {
     const n = resultat.horsMonde;
     const s = n > 1 ? "s" : "";
     lignes.push([
-      `⚠️ ${nombre(n)} bloc${s} posé${s} hors du monde (ignoré${s}). x et z vont de 0 à 127, y de 0 à 63.`,
+      `Attention : ${nombre(n)} bloc${s} posé${s} hors du monde (ignoré${s}). x et z vont de 0 à 127, y de 0 à 63.`,
       "alerte",
     ]);
   }
@@ -99,14 +109,14 @@ async function generer() {
     $("statut").textContent =
       `${nombre(blocs)} blocs · ${nombre(triangles)} triangles · ${(resultat.duree / 1000).toFixed(2)} s`;
     // Un code arrêté pour cause de temps a quand même construit quelque chose : on le vérifie.
-    if (!resultat.erreur || resultat.erreur.type === "temps") {
+    if (VERIFICATION_AUTO && (!resultat.erreur || resultat.erreur.type === "temps")) {
       etat.dernierResultat = resultat;
       verifier();
     }
   }
 
   bouton.disabled = false;
-  bouton.textContent = "▶ Générer";
+  garnir(bouton, "generer", "Générer");
   etat.enCours = false;
 }
 
@@ -114,7 +124,9 @@ async function generer() {
 function lignesErreur(erreur, code, dansEditeur) {
   const explication = expliquerErreur(erreur, LIMITE_SECONDES, code);
   const { ligne } = erreur;
-  const lignes = [[(ligne && dansEditeur ? `❌ Ligne ${ligne} : ` : "❌ ") + explication, "erreur"]];
+  const lignes = [
+    [(ligne && dansEditeur ? `Erreur, ligne ${ligne} : ` : "Erreur : ") + explication, "erreur"],
+  ];
   if (erreur.brut !== explication && erreur.type !== "temps") {
     lignes.push([`   (message de Lua : ${erreur.brut})`, "gris"]);
   }
@@ -137,7 +149,7 @@ async function evaluerLigne(src) {
     lignes.push(...lignesErreur(resultat.erreur, src, false));
     if (resultat.perdu) {
       lignes.push([
-        "La console repart d'un état neuf : clique sur ▶ Générer pour retrouver ton monde.",
+        "La console repart d'un état neuf : clique sur Générer pour retrouver ton monde.",
         "gris",
       ]);
     }
@@ -172,6 +184,7 @@ function verifier() {
 // ---- les étapes ---------------------------------------------------------
 
 function afficherEtape() {
+  if (!VERIFICATION_AUTO) return;
   const etape = ETAPES[etat.etape];
   afficherVerification(etape, etat.etape + 1, ETAPES.length, { onChoisir: (i) => choisirEtape(i) });
   afficherDefis(etape, null, etat.reussites[etat.etape] || []);
@@ -181,8 +194,10 @@ function choisirEtape(i) {
   etat.etape = i;
   stockage.ecrire("etape", i);
   afficherEtape();
-  $("verification").scrollTop = 0;
-  if (etat.dernierResultat) verifier();
+  if (VERIFICATION_AUTO) {
+    $("verification").scrollTop = 0;
+    if (etat.dernierResultat) verifier();
+  }
 }
 
 /** Pour l'adaptateur de la plateforme : suivre l'étape que l'élève lit. */
@@ -196,6 +211,10 @@ window.WorldGenerator = {
 
 // ---- les boutons ----------------------------------------------------------
 
+garnir($("generer"), "generer", "Générer");
+garnir($("de"), "de");
+garnir($("recentrer"), "recentrer", "Recentrer");
+garnir($("mode"), "marcher", "Marcher");
 $("generer").addEventListener("click", generer);
 document.addEventListener("keydown", (ev) => {
   if ((ev.ctrlKey || ev.metaKey) && ev.key === "Enter") {

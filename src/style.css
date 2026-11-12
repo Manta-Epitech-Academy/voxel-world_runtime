@@ -30,40 +30,16 @@ html, body {
 
 body {
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: 1fr;
   overflow: hidden;
 }
 
 code, kbd, pre { font-family: ui-monospace, SF Mono, Menlo, Consolas, monospace; }
 
-/* ---- la barre du haut ---- */
+/* ---- les icônes des boutons ---- */
 
-.barre {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  padding: 8px 16px;
-  background: var(--panneau);
-  border-bottom: 3px solid var(--terre);
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-}
-
-.cube {
-  width: 22px;
-  height: 22px;
-  background: linear-gradient(var(--herbe) 0 35%, var(--terre) 35%);
-  box-shadow: inset -3px -3px #00000040, inset 3px 3px #ffffff26;
-}
-
-.espaceur { flex: 1; }
+.icone { width: 1em; height: 1em; fill: currentColor; vertical-align: -0.125em; }
+.bouton .icone + span { margin-left: 0.45em; }
 
 /* ---- les panneaux (dockview) ---- */
 
@@ -290,7 +266,10 @@ kbd {
   pointer-events: none;
   white-space: nowrap;
 }
-.aide-vol[hidden], .viseur[hidden] { display: none; }
+.aide-vol { transition: opacity 0.2s; }
+/* Souris capturée : l'aide reste là, en retrait, pour qui cherche une touche. */
+.aide-vol.capture { opacity: 0.35; }
+.viseur[hidden] { display: none; }
 
 .viseur {
   position: absolute;
@@ -304,6 +283,5 @@ kbd {
 }
 
 @media (max-width: 900px) {
-  .barre { flex-wrap: wrap; gap: 8px; }
   .aide-vol { white-space: normal; max-width: calc(100% - 140px); }
 }
