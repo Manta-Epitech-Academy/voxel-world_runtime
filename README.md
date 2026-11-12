@@ -5,8 +5,9 @@ une seule page. Le code de l'élève est du **Lua**, exécuté dans le navigateu
 
 **Ce dépôt ne contient pas le sujet de l'atelier**, il vit dans
 [voxel-world_subject](https://github.com/Manta-Epitech-Academy/voxel-world_subject) et la
-plateforme l'affiche à côté de ce runtime. Ouverte seule, la page reste utilisable : elle garde
-sa propre copie du texte des étapes.
+plateforme l'affiche à côté de ce runtime. La page ne montre, de chaque étape, que son titre et
+la liste de ses défis, dans le panneau « Vérification » ; deux flèches changent d'étape quand
+aucun hôte ne le fait à la place du participant.
 
 Essayer : <https://manta-epitech-academy.github.io/voxel-world_runtime/>
 
@@ -19,7 +20,7 @@ module, avec le même comportement et les mêmes textes. Trois différences voul
 - **Les panneaux sont posés par [dockview](https://dockview.dev)**, comme dans l'éditeur TIC-80 de
   l'organisation : on les redimensionne, on les déplace par leur onglet, on agrandit un groupe
   à toute la page (⛶), et la disposition est gardée dans le navigateur. La console est un
-  panneau à part, sous le code.
+  panneau à part, sous le code ; la vérification, sous le monde.
 - **L'éditeur Monaco est réglé pour un débutant**, comme dans le runtime Pac-Man : rien
   n'apparaît que l'élève n'ait tapé. Pas de parenthèse fermée toute seule, pas de liste de
   suggestions pendant la frappe (elle reste disponible par Ctrl + Espace), pas de reformatage.
@@ -49,9 +50,9 @@ module, avec le même comportement et les mêmes textes. Trois différences voul
 | `src/editeur.js` | Monaco : thème, complétion, documentation au survol, réglage débutant |
 | `src/textures.js`, `src/maillage.js` | l'atlas de textures dessiné au pixel, et les chunks de triangles |
 | `src/deplacement.js`, `src/monde3d.js` | le vol et la marche ; la scène three.js |
-| `src/etapes/` | les sept étapes : leur texte, et les défis qui vérifient le monde |
+| `src/etapes/` | les sept étapes : leur titre, et les défis qui vérifient le monde (le texte vit dans le sujet) |
 | `src/verifications.js` | les outils communs aux défis (couches, hauteurs, marches) |
-| `src/consignes.js`, `src/console.js` | le panneau des consignes ; la console et son invite Lua |
+| `src/verification.js`, `src/console.js` | le panneau de vérification ; la console et son invite Lua |
 | `src/disposition.js` | les panneaux (dockview) |
 | `src/plateforme.js` | ce que la plateforme d'atelier attend : code de validation, mode plateforme |
 | `scripts/export_scene.py` | exporte un monde en scène glTF (`.glb`) pour le sujet |

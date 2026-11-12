@@ -1,5 +1,5 @@
 // World Generator : le point d'entrée. Relie l'éditeur, l'exécution du Lua,
-// la vue 3D, les consignes et la progression de l'élève.
+// la vue 3D, la vérification des défis et la progression de l'élève.
 import "./style.css";
 import "./plateforme.js";
 import { NB_CASES } from "./blocs.js";
@@ -9,7 +9,7 @@ import { executer, evaluer, LIMITE_SECONDES } from "./executeur.js";
 import { expliquerErreur } from "./erreurs.js";
 import { Monde3D } from "./monde3d.js";
 import { afficherConsole, ajouterConsole, initConsole } from "./console.js";
-import { afficherConsignes, afficherDefis } from "./consignes.js";
+import { afficherVerification, afficherDefis } from "./verification.js";
 import { monterDisposition } from "./disposition.js";
 import { stockage } from "./stockage.js";
 
@@ -157,8 +157,7 @@ function verifier() {
   const avant = etat.reussites[etat.etape] || [];
   etat.reussites[etat.etape] = resultats.map((r, i) => r.ok || !!avant[i]);
   stockage.ecrire("reussites", etat.reussites);
-  afficherDefis(ETAPES[etat.etape], resultats, etat.reussites[etat.etape], etapeReussie(etat.etape));
-  afficherEtapes();
+  afficherDefis(ETAPES[etat.etape], resultats, etat.reussites[etat.etape]);
   window.dispatchEvent(
     new CustomEvent("wg:verifie", {
       detail: {
@@ -172,37 +171,17 @@ function verifier() {
 
 // ---- les étapes ---------------------------------------------------------
 
-/** Les pastilles numérotées de la barre du haut. */
-function afficherEtapes() {
-  $("etapes").replaceChildren(
-    ...ETAPES.map((etape, i) => {
-      const pastille = document.createElement("button");
-      pastille.className =
-        "pastille" + (i === etat.etape ? " active" : "") + (etapeReussie(i) ? " finie" : "");
-      pastille.textContent = etapeReussie(i) ? "✓" : String(i + 1);
-      pastille.title = `Étape ${i + 1} : ${etape.titre}`;
-      pastille.addEventListener("click", () => choisirEtape(i));
-      return pastille;
-    }),
-  );
-}
-
 function afficherEtape() {
   const etape = ETAPES[etat.etape];
-  afficherConsignes(etape, etat.etape + 1, ETAPES.length, {
-    editeur,
-    titreSuivant: ETAPES[etat.etape + 1]?.titre,
-    onSuivant: (numero) => choisirEtape(numero),
-  });
-  afficherDefis(etape, null, etat.reussites[etat.etape] || [], etapeReussie(etat.etape));
+  afficherVerification(etape, etat.etape + 1, ETAPES.length, { onChoisir: (i) => choisirEtape(i) });
+  afficherDefis(etape, null, etat.reussites[etat.etape] || []);
 }
 
 function choisirEtape(i) {
   etat.etape = i;
   stockage.ecrire("etape", i);
-  afficherEtapes();
   afficherEtape();
-  $("consignes").scrollTop = 0;
+  $("verification").scrollTop = 0;
   if (etat.dernierResultat) verifier();
 }
 
@@ -239,12 +218,11 @@ initConsole({ onLigne: evaluerLigne });
 
 // ---- au départ ----------------------------------------------------------
 
-afficherEtapes();
 afficherEtape();
 if (editeur.valeur.trim() !== CODE_DE_DEPART.trim()) {
   generer();
 } else {
-  afficherConsole([["Prêt. Écris ton code, puis clique sur ▶ Générer.", "gris"]]);
+  afficherConsole([["Prêt.", "gris"]]);
 }
 
 /** Pour les tests et les scripts (export de scène) : les morceaux de la page. */

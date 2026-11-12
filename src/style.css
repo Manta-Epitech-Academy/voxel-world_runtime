@@ -63,21 +63,6 @@ code, kbd, pre { font-family: ui-monospace, SF Mono, Menlo, Consolas, monospace;
   box-shadow: inset -3px -3px #00000040, inset 3px 3px #ffffff26;
 }
 
-.etapes { display: flex; gap: 6px; flex-wrap: wrap; }
-
-.pastille {
-  width: 32px;
-  height: 32px;
-  border: 2px solid var(--bord);
-  background: var(--carte);
-  color: var(--doux);
-  font-weight: 700;
-  cursor: pointer;
-}
-.pastille:hover { border-color: var(--doux); color: var(--texte); }
-.pastille.finie { background: var(--herbe-fonce); border-color: var(--herbe); color: #fff; }
-.pastille.active { outline: 2px solid var(--ciel); outline-offset: 2px; color: var(--texte); }
-
 .espaceur { flex: 1; }
 
 /* ---- les panneaux (dockview) ---- */
@@ -133,31 +118,23 @@ code, kbd, pre { font-family: ui-monospace, SF Mono, Menlo, Consolas, monospace;
   background: var(--panneau);
 }
 
-/* ---- les consignes ---- */
+/* ---- la vérification ---- */
 
-.consignes { display: grid; grid-template-columns: minmax(0, 1fr); }
+.verification { display: grid; grid-template-columns: minmax(0, 1fr); }
 
-.consignes-contenu {
+.verification-contenu {
   font-size: 13.5px;
   line-height: 1.5;
   min-height: 0;
   overflow-y: auto;
-  padding: 14px 18px 36px;
+  padding: 10px 14px 14px;
 }
-.consignes-contenu > * { max-width: 860px; }
 
-.surtitre {
-  color: var(--doux);
-  font-size: 0.85em;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-.consignes h1 { margin: 2px 0 8px; font-size: 1.6em; line-height: 1.25; }
-.consignes h2 { margin: 26px 0 10px; padding-bottom: 4px; font-size: 1.15em; border-bottom: 2px solid var(--bord); }
-.consignes h4 { margin: 0 0 6px; font-size: 1em; }
-.consignes p { margin: 0 0 8px; }
-.consignes ul { margin: 4px 0 0; padding-left: 20px; }
-.consignes code { padding: 1px 5px; background: var(--code); border-radius: 3px; font-size: 0.92em; }
+.entete-etape { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.titre-etape { flex: 1; min-width: 0; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.etape-nav { padding: 0 9px; border-bottom-width: 2px; font-size: 16px; line-height: 1.4; }
+.etape-nav:active { margin-top: 0; }
+.etape-nav:disabled { opacity: 0.3; cursor: default; }
 
 kbd {
   display: inline-block;
@@ -171,8 +148,7 @@ kbd {
   text-align: center;
 }
 
-.lore { padding: 10px 14px; border-left: 4px solid var(--terre); background: #8b6a471f; font-style: italic; }
-
+/* Les encarts de la plateforme (code de validation, étape sans défi). */
 .callout {
   margin: 10px 0;
   padding: 12px 14px;
@@ -180,38 +156,9 @@ kbd {
   border: 1px solid var(--bord);
   border-radius: 6px;
 }
-.callout.piege { border-color: #f2c14e73; background: #f2c14e14; }
-.callout.bonus { border-color: #9fd3ff66; background: #9fd3ff12; margin-top: 18px; }
+.callout code { padding: 1px 5px; background: var(--code); border-radius: 3px; font-size: 0.92em; }
 
-.extrait { position: relative; margin-top: 8px; }
-.extrait pre, .indice pre {
-  margin: 0;
-  padding: 10px 12px;
-  background: var(--code);
-  border-radius: 4px;
-  overflow-x: auto;
-  font-size: 0.93em;
-  line-height: 1.45;
-}
-.copier {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  padding: 2px 8px;
-  border: 1px solid var(--bord);
-  background: var(--carte);
-  color: var(--doux);
-  font-size: 12px;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.15s;
-}
-.extrait:hover .copier, .copier:focus-visible { opacity: 1; }
-.copier:hover { color: var(--texte); border-color: var(--doux); }
-
-.objectif { font-size: 1.07em; font-weight: 600; }
-
-.defis { list-style: none; padding: 0 !important; margin: 10px 0 14px !important; }
+.defis { list-style: none; padding: 0 !important; margin: 0 !important; }
 .defis li {
   display: grid;
   grid-template-columns: 26px 1fr;
@@ -223,19 +170,8 @@ kbd {
 }
 .defis li.reussi { border-color: var(--herbe-fonce); background: #5fb9461a; }
 .defis li.rate { border-color: #ff6b6b66; }
-.defis .message { grid-column: 2; color: var(--doux); font-size: 0.93em; }
+.defis .message, .callout .message { grid-column: 2; color: var(--doux); font-size: 0.93em; }
 .defis li.rate .message { color: #ffc2c2; }
-
-.indice { margin: 6px 0; padding: 6px 12px; border: 1px dashed var(--bord); border-radius: 6px; }
-.indice summary, .aide-memoire summary { cursor: pointer; color: var(--doux); font-weight: 600; }
-.indice[open] summary { margin-bottom: 6px; }
-.aide-memoire { margin-top: 20px; }
-.aide-memoire dl { margin: 8px 0 0; }
-.aide-memoire dt { margin-top: 8px; }
-.aide-memoire dd { margin: 2px 0 0 12px; color: var(--doux); font-size: 0.93em; }
-
-.suivant { margin-top: 24px; width: 100%; opacity: 0.55; }
-.suivant.pret { opacity: 1; background: var(--herbe-fonce); border-color: var(--herbe); color: #fff; }
 
 /* ---- les boutons ---- */
 

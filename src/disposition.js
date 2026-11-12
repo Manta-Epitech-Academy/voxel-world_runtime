@@ -1,5 +1,5 @@
 // La disposition des panneaux : dockview, comme l'éditeur TIC-80 de
-// l'organisation. Quatre panneaux — le monde 3D, les consignes, le code, la
+// l'organisation. Quatre panneaux — le monde 3D, la vérification, le code, la
 // console — que l'élève peut redimensionner, déplacer en les glissant par
 // leur onglet, et agrandir à toute la page (le bouton ⛶ de chaque groupe).
 // La disposition est gardée dans le navigateur, et aucun panneau ne peut
@@ -11,11 +11,11 @@ import { stockage } from "./stockage.js";
 
 const CLE = "disposition";
 /** À changer quand les panneaux changent : une disposition d'une autre version est ignorée. */
-const VERSION = 1;
+const VERSION = 2;
 
 export const PANNEAUX = {
   monde: "Monde 3D",
-  consignes: "Consignes",
+  verification: "Vérification",
   code: "Code",
   console: "Console",
 };
@@ -92,7 +92,7 @@ export function monterDisposition(hote) {
     return api.addPanel({ id, component: id, title: PANNEAUX[id], position, ...taille });
   }
 
-  // Comme l'application d'origine : le monde au-dessus des consignes à
+  // Le monde au-dessus de la vérification à
   // gauche, le code à droite sur toute la hauteur, la console sous le code.
   function dispositionParDefaut() {
     const { clientWidth: largeur, clientHeight: hauteur } = hote;
@@ -103,9 +103,9 @@ export function monterDisposition(hote) {
       { initialWidth: Math.round(largeur * 0.45) },
     );
     ouvrir(
-      "consignes",
+      "verification",
       { referencePanel: "monde", direction: "below" },
-      { initialHeight: Math.round(hauteur * 0.42) },
+      { initialHeight: Math.round(hauteur * 0.2) },
     );
     ouvrir(
       "console",

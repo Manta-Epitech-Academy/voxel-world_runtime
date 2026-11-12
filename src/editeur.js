@@ -166,6 +166,3 @@ export class Editeur {
     this.editor.focus();
   }
 }
-
-/** Le HTML coloré d'un extrait de Lua, pour les exemples des consignes. */
-export const colorer = (code) => monaco.editor.colorize(code, "lua", { tabSize: 2 });

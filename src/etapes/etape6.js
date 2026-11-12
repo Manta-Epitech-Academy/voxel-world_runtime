@@ -1,4 +1,5 @@
 // Étape 6 : une mer plate, du sable sur les rivages, de la neige en altitude.
+// Le texte de cette étape vit dans le sujet (voxel-world_subject) ; ici, son titre et ses défis.
 import {
   B,
   TAILLE,
@@ -17,63 +18,6 @@ import {
 
 export default {
   titre: "Mers, plages et neige",
-  duree: "25 min",
-  lore: `
-    <p>Tes collines sont belles, mais tout est vert. Il manque la <strong>mer</strong>, des
-    <strong>plages</strong> là où elle touche la terre, et des <strong>sommets enneigés</strong>.</p>
-    <p>Le bloc du dessus ne sera plus toujours le même : il va dépendre de l'altitude.</p>`,
-  outils: [
-    {
-      titre: "if : faire un choix",
-      texte: `<p><code>if</code> exécute du code seulement si une condition est vraie. <code>elseif</code>
-        teste une autre condition, <code>else</code> s'occupe de tous les autres cas.</p>`,
-      code: `local h = 30
-if h < 20 then
-  print("bas")
-elseif h > 35 then
-  print("haut")
-else
-  print("au milieu")
-end`,
-    },
-    {
-      titre: "Choisir le bloc du dessus",
-      texte: "<p>On range le type de bloc dans une variable, et on la change si besoin avant de poser.</p>",
-      code: `local dessus = HERBE
-if h >= 34 then
-  dessus = NEIGE
-end
-set_block(x, h, z, dessus)`,
-    },
-    {
-      titre: "Remplir d'eau",
-      texte: `<p>De l'eau de <code>h + 1</code> jusqu'au niveau de la mer. Si le sol est plus haut que la
-        mer, la boucle ne fait <strong>aucun tour</strong> : pas d'eau. Pratique !</p>`,
-      code: `NIVEAU_MER = 22
-for y = h + 1, NIVEAU_MER do
-  set_block(x, y, z, EAU)
-end`,
-    },
-    {
-      titre: "Les comparaisons",
-      texte:
-        "<p><code>&lt;</code> plus petit, <code>&gt;</code> plus grand, <code>&lt;=</code> et <code>&gt;=</code> « ou égal », <code>==</code> égal, <code>~=</code> différent.</p>",
-    },
-  ],
-  pieges: [
-    "<code>=</code> range une valeur, <code>==</code> compare. On écrit <code>if h == 20 then</code>.",
-    "L'eau se pose <strong>au-dessus</strong> du sol, jamais à sa place.",
-    "Si <code>NIVEAU_MER</code> est plus bas que tout ton terrain, il n'y aura pas de mer du tout.",
-  ],
-  objectif:
-    "Ajoute une <strong>mer</strong> à hauteur fixe, du <code>SABLE</code> partout où la terre touche l'eau, et de la <code>NEIGE</code> au sommet des montagnes.",
-  indices: [
-    "Choisis <code>NIVEAU_MER</code> pour qu'une partie de ton terrain soit dessous. Affiche quelques hauteurs pour t'aider.",
-    "Une plage, c'est une colonne à peine plus haute que la mer : <code>h &lt;= NIVEAU_MER + 1</code>.",
-    "Sous l'eau, mets aussi du sable à la place de l'herbe et de la terre.",
-  ],
-  bonus: "Pose de la <code>GLACE</code> à la surface de l'eau quand la mer est entourée de neige.",
-
   defis: [
     {
       nom: "Une mer, des plages et de la neige",

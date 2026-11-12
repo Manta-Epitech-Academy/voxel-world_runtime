@@ -1,6 +1,5 @@
 // Ce que le code de l'élève peut appeler : la documentation des fonctions et
-// des constantes, servie trois fois — la complétion et le survol dans
-// l'éditeur, et l'aide-mémoire au bas des consignes. Les fonctions
+// des constantes, pour la complétion et le survol dans l'éditeur. Les fonctions
 // elles-mêmes sont écrites en Lua dans lua/prelude.lua (qui garde aussi les
 // anciens noms français en alias, non documentés).
 import { BLOCS, TAILLE, HAUTEUR } from "./blocs.js";

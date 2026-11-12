@@ -157,17 +157,17 @@ def main():
         want = [("2", ">"), ("true", ">"), ("> if true then", ">>"), ("7", ">"), ("> set_block(64, 60, 64, DIAMANT)", ">"), ("13", ">"), ("true", ">"), ("true", ">")]
         if got != want:
             failures.append(f"console prompt: got {got}, wanted {want}")
-        # Platform mode hides the app's own copy of the workshop text.
-        visible = pg.evaluate("()=>[...document.querySelectorAll('#consignes > *')]"
-                              ".filter(e=>getComputedStyle(e).display!=='none').map(e=>e.id||e.className)")
-        print("visible in platform mode:", visible)
-        if any(v in ("indice", "callout outil") for v in visible) or pg.is_visible("#etapes"):
-            failures.append(f"platform mode still shows the app's own text: {visible}")
+        # Platform mode with a host: the host picks the step, so the arrows go.
+        nav = pg.evaluate("()=>[...document.querySelectorAll('.etape-nav')]"
+                          ".filter(e=>getComputedStyle(e).display!=='none').length")
+        print("step arrows visible with a host:", nav)
+        if nav:
+            failures.append("platform mode with a host still shows the step arrows")
         # A platform step with no check in the app: one neutral note, nothing else.
         pg.evaluate("VoxelWorld.etapeSansDefi(true)")
         pg.wait_for_timeout(200)
         note = pg.is_visible("#wg-sans-defi")
-        others = pg.evaluate("()=>[...document.querySelectorAll('#consignes > *')]"
+        others = pg.evaluate("()=>[...document.querySelectorAll('#verification > *')]"
                              ".filter(e=>e.id!=='wg-sans-defi'&&getComputedStyle(e).display!=='none').length")
         print("no-check step: note", note, "| other visible blocks", others)
         if not note or others:
@@ -180,15 +180,19 @@ def main():
         pg.evaluate("WorldGenerator.allerA(2)")
         if pg.evaluate("WorldGenerator.etape()") != 2:
             failures.append("WorldGenerator.allerA does not change the step")
-        # `?plateforme=1`: the same hiding with no host, step list kept.
+        # `?plateforme=1`: no host, so the participant changes step with the arrows.
         pg.goto(url + "?plateforme=1")
         pg.wait_for_selector("#generer")
         pg.wait_for_timeout(500)
-        shown = pg.evaluate("()=>[...document.querySelectorAll('#consignes > *')]"
-                            ".filter(e=>getComputedStyle(e).display!=='none').map(e=>e.id||e.className)")
-        print("visible with ?plateforme=1:", shown, "| step list:", pg.is_visible("#etapes"))
-        if any(v in ("indice", "callout outil") for v in shown) or not pg.is_visible("#etapes"):
-            failures.append(f"?plateforme=1 does not hide the text or hides the step list: {shown}")
+        nav = pg.evaluate("()=>[...document.querySelectorAll('.etape-nav')]"
+                          ".filter(e=>getComputedStyle(e).display!=='none').length")
+        print("step arrows visible with ?plateforme=1:", nav)
+        if nav != 2:
+            failures.append(f"?plateforme=1 should keep the two step arrows, got {nav}")
+        before = pg.evaluate("WorldGenerator.etape()")
+        pg.click("#etape-suiv")
+        if pg.evaluate("WorldGenerator.etape()") != before + 1:
+            failures.append("the › arrow does not go to the next step")
         if len(tokens) < 7:
             failures.append(f"wg:jeton fired {len(tokens)} times, expected 7")
         failures.extend(flight(browser, url))

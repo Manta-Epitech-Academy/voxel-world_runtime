@@ -8,10 +8,9 @@
 //   La plateforme calcule la même valeur et en fait le flag de l'étape
 //   (tools/sync_subject.py, TOKEN_SCHEMES). Sans secret, rien n'est affiché.
 //
-// - Le mode plateforme. Le texte de l'atelier, les indices et la liste des
-//   étapes sont affichés par la plateforme, donc ce mode cache les copies
-//   qu'en a la page, et ne garde, pour l'étape en cours, que son titre, son
-//   objectif et la liste des défis.
+// - Le mode plateforme. La page ne montre que la vérification de l'étape en
+//   cours ; quand un hôte choisit l'étape à la place du participant, ce mode
+//   cache aussi les flèches qui changent d'étape.
 //
 // Le Lua de l'élève ne peut rien atteindre de tout cela : il tourne dans
 // wasmoon sans accès au JavaScript de la page (lua/worker.js). Ce qu'un code
@@ -58,7 +57,7 @@ function boite() {
     el.className = "callout";
     el.hidden = true;
   }
-  // Le panneau des consignes est reconstruit à chaque changement d'étape :
+  // Le panneau est reconstruit à chaque changement d'étape :
   // la boîte est remise après la liste des défis à chaque fois.
   const defis = document.getElementById("defis");
   if (defis && el.previousElementSibling !== defis) defis.after(el);
@@ -118,10 +117,8 @@ window.addEventListener("wg:verifie", (ev) => {
 // ---- le mode plateforme -------------------------------------------------
 
 const CSS = `
-body.wg-plateforme:not(.wg-navigation) #etapes,
-body.wg-plateforme:not(.wg-navigation) #suivant { display: none !important; }
-body.wg-plateforme #consignes > :not(.entete-etape):not(.objectif):not(#defis):not(#wg-jeton):not(#wg-sans-defi) { display: none !important; }
-body.wg-sans-defi #consignes > :not(#wg-sans-defi) { display: none !important; }
+body.wg-plateforme:not(.wg-navigation) .etape-nav { display: none !important; }
+body.wg-sans-defi #verification > :not(#wg-sans-defi) { display: none !important; }
 #wg-sans-defi { margin: 4px 0; }
 #wg-jeton { margin-top: 12px; }
 #wg-jeton .wg-code { display: inline-block; margin: 6px 0; padding: 4px 8px; font-size: 1.15em; user-select: all; }
@@ -136,8 +133,8 @@ function activer(options) {
   }
   document.body.classList.add("wg-plateforme");
   // Sans hôte à suivre (un runtime servi depuis une autre origine, à qui la
-  // plateforme ne peut pas parler), l'élève change d'étape lui-même : la
-  // liste des étapes reste.
+  // plateforme ne peut pas parler), l'élève change d'étape lui-même : les
+  // flèches restent.
   document.body.classList.toggle("wg-navigation", !!(options && options.navigation));
 }
 
@@ -158,7 +155,7 @@ function choisirSansDefi(actif) {
       note.textContent =
         "Pas de vérification automatique pour cette étape : vérifie ton monde avec la liste du sujet, à côté.";
     }
-    const panneau = document.getElementById("consignes");
+    const panneau = document.getElementById("verification");
     if (panneau && note.parentNode !== panneau) panneau.prepend(note);
     cacher();
   } else if (note) {
@@ -185,7 +182,7 @@ window.VoxelWorld = {
     secret = s ? String(s) : null;
     jetons = {};
   },
-  /** Cache la copie que la page a du texte de l'atelier. */
+  /** Le mode plateforme (voir en tête de fichier). */
   enable(options) {
     quandPret(() => activer(options));
   },
