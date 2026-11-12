@@ -34,7 +34,9 @@ export function afficherVerification(etape, numero, total, { onChoisir }) {
   suiv.title = "Étape suivante";
   suiv.disabled = numero >= total;
   suiv.addEventListener("click", () => onChoisir(numero));
-  entete.append(prec, el("span", "titre-etape", `Étape ${numero} · ${etape.titre}`), suiv);
+  // Le titre seul : le sujet numérote ses étapes à sa façon (des étapes
+  // intermédiaires sans défi), un numéro ici contredirait le sien.
+  entete.append(prec, el("span", "titre-etape", etape.titre), suiv);
   panneau.append(entete);
 
   const defis = el("ul", "defis");
