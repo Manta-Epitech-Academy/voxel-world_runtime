@@ -31,6 +31,11 @@ function set_block(x, y, z, b)
     if type(b) == "string" then
       error('set_block : "' .. b .. '" est un texte. Écris le nom du bloc en majuscules, sans guillemets : ' .. b:upper(), 2)
     end
+    if type(b) == "number" then
+      error("set_block : " .. tostring(b) .. " n'est pas un type de bloc (essaie PIERRE, HERBE, TERRE…). "
+        .. "Si tu as créé une variable avec le nom d'un bloc, par exemple NEIGE = " .. tostring(b)
+        .. ", renomme-la : NIVEAU_NEIGE", 2)
+    end
     error("set_block : " .. tostring(b) .. " n'est pas un type de bloc (essaie PIERRE, HERBE, TERRE…)", 2)
   end
   x, y, z = floor(x), floor(y), floor(z)
